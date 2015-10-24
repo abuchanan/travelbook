@@ -1,13 +1,30 @@
 import React from 'react';
 import Reflux from 'reflux';
 import { Link } from 'react-router';
+import PureRenderMixin from 'react-addons-pure-render-mixin';
 
 import CalendarStore from '../stores/calendar';
 import CalendarActions from '../actions/calendar';
 import * as constants from '../scripts/constants';
 
 
+const FocusWrapper = React.createClass({
+  render() {
+
+    if (this.props.focused) {
+      var className = "focused";
+    } else {
+      var className = "unfocused";
+    }
+
+    return <div className={className}>{this.props.children}</div>;
+  }
+});
+
+
 const Day = React.createClass({
+
+  mixins: [PureRenderMixin],
 
   isFirstDay: function() {
     return this.props.day.moment.date() == 1;
@@ -35,15 +52,12 @@ const Day = React.createClass({
   },
 
   render() {
+    console.log('day render');
 
     var day = this.props.day;
     var style = {
       backgroundImage: "url(" + day.backgroundImage + ")",
     };
-
-    if (!this.props.day.focused) {
-      style.opacity = "0.1";
-    }
 
     // The first day of the month gets a date string, e.g. "Jan 1"
     // otherwise it's just the date number, e.g. "1"
@@ -91,7 +105,13 @@ export default React.createClass({
     }
 
     var days = this.state.days.map((day) => {
-      return <Day day={day} key={day.key} />;
+
+      var focused = day.moment.month() == this.state.focusedMonth;
+      return (
+        <FocusWrapper focused={focused} key={day.key}>
+          <Day day={day} />
+        </FocusWrapper>
+      );
     });
 
     return (<div className="calendar" onScroll={this.handleScroll}

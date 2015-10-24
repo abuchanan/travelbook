@@ -1,10 +1,18 @@
 import Reflux from 'reflux';
 import moment from 'moment';
 import 'moment-range';
+import Immutable from 'immutable';
 
 import CalendarActions from '../actions/calendar';
 import * as constants from '../scripts/constants';
 
+var DayRecord = Immutable.Record({
+  key: "",
+  moment: null,
+  focused: false,
+  path: "",
+  backgroundImage: "",
+});
 
 export default Reflux.createStore({
 
@@ -17,16 +25,13 @@ export default Reflux.createStore({
   _dayRects: [],
   _timer: null,
   _timeout: 25,
+  _start: moment("2015-01-01", "YYYY-MM-DD"),
+  _end: moment("2015-10-15", "YYYY-MM-DD"),
 
   init() {
+    this._range = moment.range(this._start, this._end);
+    this._currentFocus = this._start.month();
     this.fetchDays();
-  },
-
-  _setCurrentFocus(i) {
-    if (i != this._currentFocus) {
-      this._currentFocus = i;
-      this.fetchDays();
-    }
   },
 
   _resolveFocus() {
@@ -35,23 +40,22 @@ export default Reflux.createStore({
 
       if (dr.top >= this._calendarRect.top && dr.top <= this._calendarRect.bottom) {
 
-
         var p = this._calendarRect.bottom - dr.top;
         console.log('cand', dr, this._calendarRect, p, (this._calendarRect.height / 2));
 
         if (p > (this._calendarRect.height / 2)) {
-          this._setCurrentFocus(i);
+          this._currentFocus = i;
         } else {
-          this._setCurrentFocus(i - 1);
+          this._currentFocus = i - 1;
         }
-
         break;
 
       } else if (dr.top > this._calendarRect.bottom) {
-        this._setCurrentFocus(i - 1);
+        this._currentFocus = i - 1;
         break;
       }
     }
+    this._triggerData();
   },
 
   _scrollFinished() {
@@ -61,13 +65,12 @@ export default Reflux.createStore({
 
 
   scroll() {
-
     if (this._timer !== null) {
       clearTimeout(this._timer);
     }
-
     this._timer = setTimeout(this._scrollFinished, this._timeout);
   },
+
 
   getInitialState() {
     return this._data;
@@ -84,27 +87,27 @@ export default Reflux.createStore({
 
 
   fetchDays() {
-    var start = moment("2015-01-01", "YYYY-MM-DD");
-    var end = moment("2015-10-15", "YYYY-MM-DD");
-    var range = moment.range(start, end);
 
-    if (this._currentFocus == -1) {
-      this._currentFocus = start.month();
-    }
+    this._days = [];
 
-    var days = [];
+    this._range.by("days", (dayMoment) => {
 
-    range.by("days", (day) => {
-      days.push({
-        key: day.valueOf(),
-        moment: day,
-        focused: day.month() == this._currentFocus,
-        path: "/day/" + day.format(constants.DATE_ID_FORMAT),
+      var dayRec = new DayRecord({
+        key: dayMoment.valueOf(),
+        moment: dayMoment,
+        path: "/day/" + dayMoment.format(constants.DATE_ID_FORMAT),
         backgroundImage: "images/thumb1.jpg",
       });
+
+      this._days.push(dayRec);
     });
-    
-    this._data = {days: days};
+
+    this._triggerData();
+  },
+
+
+  _triggerData() {
+    this._data = {days: this._days, focusedMonth: this._currentFocus};
     this.trigger(this._data);
   }
 });

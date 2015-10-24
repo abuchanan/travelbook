@@ -18,6 +18,13 @@ body {
   overflow-y: scroll;
 }
 
+.focused {
+}
+
+.unfocused {
+  opacity: 0.1;
+}
+
 .day-container {
   flex-grow: 1;
   min-width: 150px;
