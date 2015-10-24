@@ -1,0 +1,41 @@
+body {
+  background-color: #1d1d1d;
+}
+
+.contain {
+  width: 100%;
+
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+
+  display: -webkit-flex;
+  -webkit-justify-content: center;
+  -webkit-flex-wrap: wrap;
+}
+
+.day {
+  width: 150px;
+  height: 150px;
+  background-color: blue;
+  border: 1px solid black;
+}
+
+#day-12 {
+  background-image: url("thumb1.jpg");
+}
+
+#day-13 {
+  background-image: url("thumb2.jpg");
+}
+
+.date-row {
+}
+
+.date {
+  color: white;
+  background-color: #1d1d1d;
+  padding: 0 5px;
+  float: right;
+  border-radius: 0 0 0 3px;
+}

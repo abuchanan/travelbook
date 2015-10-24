@@ -1,0 +1,28 @@
+{
+  "name": "travel-book",
+  "version": "1.0.0",
+  "description": "A travel journal in calender form.",
+  "author": "Edward Alexander Buchanan",
+  "license": "MIT",
+  "dependencies": {
+    "immutable": "^3.7.5",
+    "lodash": "^3.10.1",
+    "moment": "^2.10.6",
+    "moment-range": "^2.0.3",
+    "react": "^0.14.0",
+    "react-router": "^1.0.0-rc3",
+    "react-templates": "^0.2.0",
+    "reflux": "^0.3.0"
+  },
+  "devDependencies": {
+    "browserify": "^11.2.0",
+    "del": "^2.0.2",
+    "gulp": "^3.9.0",
+    "gulp-load-plugins": "^1.0.0",
+    "gulp-react-templates": "^0.1.0",
+    "gulp-webserver": "^0.9.1",
+    "react-templatify": "^0.2.0",
+    "run-sequence": "^1.1.4",
+    "vinyl-source-stream": "^1.1.0"
+  }
+}
