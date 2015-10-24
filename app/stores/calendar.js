@@ -24,6 +24,7 @@ export default Reflux.createStore({
   _lastUpdate: null,
   _dayRects: [],
   _timer: null,
+  _interval: null,
   _timeout: 25,
   _start: moment("2015-01-01", "YYYY-MM-DD"),
   _end: moment("2015-10-15", "YYYY-MM-DD"),
@@ -35,36 +36,51 @@ export default Reflux.createStore({
   },
 
   _resolveFocus() {
+    console.log('resolvin');
+
+    var nextFocus = -1;
+
     for (var i = 0; i < this._dayRects.length; i++) {
       var dr = this._dayRects[i];
 
       if (dr.top >= this._calendarRect.top && dr.top <= this._calendarRect.bottom) {
 
         var p = this._calendarRect.bottom - dr.top;
-        console.log('cand', dr, this._calendarRect, p, (this._calendarRect.height / 2));
 
         if (p > (this._calendarRect.height / 2)) {
-          this._currentFocus = i;
+          nextFocus = i;
         } else {
-          this._currentFocus = i - 1;
+          nextFocus = i - 1;
         }
         break;
 
       } else if (dr.top > this._calendarRect.bottom) {
-        this._currentFocus = i - 1;
+        nextFocus = i - 1;
         break;
       }
     }
+
+    if (nextFocus == -1 || nextFocus == this._currentFocus) {
+      return;
+    }
+
+    this._currentFocus = nextFocus;
     this._triggerData();
   },
 
   _scrollFinished() {
-    console.log('scroll finished');
-    this._resolveFocus();
+    //this._resolveFocus();
+    console.log('scroll end');
+    clearInterval(this._interval);
+    this._interval = null;
   },
 
 
   scroll() {
+    if (this._interval === null) {
+      this._interval = setInterval(this._resolveFocus, 100);
+    }
+
     if (this._timer !== null) {
       clearTimeout(this._timer);
     }
