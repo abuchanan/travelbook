@@ -19,7 +19,7 @@ gulp.task('copy', function() {
 
   var toCopy = [
     'app/**/*.js', 'app/styles/**/*.css', 'app/index.html',
-    'app/images/**'
+    'app/images/**', 'app/html/**',
   ];
 
   return gulp

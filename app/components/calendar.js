@@ -4,6 +4,7 @@ import { Link } from 'react-router';
 
 import Day from './day';
 import CalendarStore from '../stores/calendar';
+import * as constants from '../scripts/constants';
 
 
 export default React.createClass({
@@ -16,7 +17,6 @@ export default React.createClass({
     }
 
     var days = this.state.days.map((d) => {
-      var path = "/day/" + d.date;
 
       var key = d.moment.valueOf();
 
@@ -25,6 +25,8 @@ export default React.createClass({
       } else {
         var s = d.moment.format("D");
       }
+
+      var path = "/day/" + d.moment.format(constants.DATE_ID_FORMAT);
 
       return (
         <div key={key}>
