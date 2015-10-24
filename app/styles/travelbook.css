@@ -7,20 +7,26 @@ body {
   width: 95%;
 }
 
-.month {
+.calendar {
   display: flex;
   display: -webkit-flex;
 
   flex-wrap: wrap;
   -webkit-flex-wrap: wrap;
 
-  margin: 20px 0;
+  height: 500px;
+  overflow-y: scroll;
+}
+
+.day-container {
+  flex-grow: 1;
+  min-width: 150px;
 }
 
 .day {
-  width: 150px;
   height: 150px;
   background-color: blue;
+  background-size: cover;
   border: 1px solid black;
 }
 

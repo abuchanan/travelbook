@@ -1,5 +1,5 @@
 var gulp          = require('gulp');
-var browserify    = require('browserify');
+var browserify    = require('browserify-incremental');
 var rt = require('gulp-react-templates');
 var del           = require('del');
 var source        = require('vinyl-source-stream');
@@ -32,6 +32,7 @@ gulp.task('browserify', function() {
   var browserifyConfig = {
     entries: ['./build/scripts/app.js'],
     extensions: ['.rt.js'],
+    cacheFile: './build/browserify-incremental-cache.json',
   };
 
   return browserify(browserifyConfig)
