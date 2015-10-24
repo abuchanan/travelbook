@@ -2,16 +2,19 @@ body {
   background-color: #1d1d1d;
 }
 
-.contain {
-  width: 100%;
+#app-container {
+  margin: 0 auto;
+  width: 95%;
+}
 
+.month {
   display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-
   display: -webkit-flex;
-  -webkit-justify-content: center;
+
+  flex-wrap: wrap;
   -webkit-flex-wrap: wrap;
+
+  margin: 20px 0;
 }
 
 .day {

@@ -2,42 +2,66 @@ import React from 'react';
 import Reflux from 'reflux';
 import { Link } from 'react-router';
 
-import Day from './day';
 import CalendarStore from '../stores/calendar';
-import * as constants from '../scripts/constants';
+
+
+const Day = React.createClass({
+
+  render() {
+
+    var day = this.props.day;
+    var style = {
+      backgroundImage: "url(" + day.backgroundImage + ")",
+    };
+
+    // The first day of the month gets a date string, e.g. "Jan 1"
+    // otherwise it's just the date number, e.g. "1"
+    if (day.moment.date() == 1) {
+      var dateStr = day.moment.format("MMM D");
+    } else {
+      var dateStr = day.moment.format("D");
+    }
+
+    return (
+      <Link to={day.path}>
+        <div className="day" style={style}>
+          <div className="date-row">
+            <div className="date">{dateStr}</div>
+          </div>
+        </div>
+      </Link>
+    );
+  }
+});
+
+
+const Month = React.createClass({
+
+  render() {
+
+    var days = this.props.days.map((day) => {
+      return <Day day={day} key={day.key} />;
+    });
+
+    return <div className="month">{days}</div>;
+  }
+});
 
 
 export default React.createClass({
 
-  mixins: [Reflux.connect(CalendarStore, 'days')],
+  mixins: [Reflux.connect(CalendarStore)],
 
   render() {
-    if (!this.state.days) {
+    if (!this.state.months) {
       return <div>none</div>;
     }
 
-    var days = this.state.days.map((d) => {
-
-      var key = d.moment.valueOf();
-
-      if (d.moment.date() == 1) {
-        var s = d.moment.format("MMM D");
-      } else {
-        var s = d.moment.format("D");
-      }
-
-      var path = "/day/" + d.moment.format(constants.DATE_ID_FORMAT);
-
-      return (
-        <div key={key}>
-          <Link to={path}>
-            <Day date={s} backgroundImage={d.backgroundImage} />
-          </Link>
-        </div>
-      );
+    var months = this.state.months.map((month) => {
+      return <Month days={month.days} key={month.key} />
     });
 
-    return <div className="contain">{days}</div>;
+    return <div>{months}</div>;
   }
 
 });
