@@ -4,9 +4,11 @@ var del           = require('del');
 var source        = require('vinyl-source-stream');
 var runSequence   = require('run-sequence');
 var webserver     = require('gulp-webserver');
+var yaml2json     = require('yaml-to-json');
+var fs            = require('fs');
  
 
-var BUILD_DIR = './build';
+var BUILD_DIR = __dirname + '/build';
 
 
 gulp.task('clean:dev', function() {
@@ -28,6 +30,8 @@ gulp.task('copy', function() {
 
 
 gulp.task('yaml2json', function() {
+  var data = yaml2json(fs.readFileSync(__dirname + '/sorted.yml'))
+  fs.writeFileSync(BUILD_DIR + '/data.json', JSON.stringify(data));
 });
 
 gulp.task('browserify', function() {
@@ -54,5 +58,6 @@ gulp.task('build', function() {
 
   runSequence('clean:dev',
               'copy',
+              'yaml2json',
               'browserify');
 });
