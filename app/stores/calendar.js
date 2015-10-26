@@ -1,5 +1,5 @@
 import Reflux from 'reflux';
-import moment from 'moment';
+import Moment from 'moment';
 import 'moment-range';
 import Immutable from 'immutable';
 import jQuery from 'jquery';
@@ -8,14 +8,51 @@ import CalendarActions from '../actions/calendar';
 import * as constants from '../scripts/constants';
 
 var DayRecord = Immutable.Record({
-  key: "",
+  id: 0,
   isFirst: false,
   moment: null,
-  focused: false,
   type: "",
   path: "",
   backgroundImage: "",
 });
+
+
+class DaysConfig {
+  constructor() {
+    this._data = new Map();
+  }
+
+  _get_or_create(key) {
+    var entry = this._data.get(key);
+    if (!entry) {
+      entry = [];
+      this._data.set(key, entry);
+    }
+    return entry;
+  }
+
+  _key(x) {
+    var moment = Moment(x);
+    return moment.format(constants.DATE_ID_FORMAT);
+  }
+
+  add(x, config) {
+    this._get_or_create(this._key(x)).push(config);
+  }
+
+  get(x) {
+    if (!this.has(x)) {
+      return [];
+    }
+    return this._data.get(this._key(x));
+  }
+
+  has(x) {
+    return this._data.has(this._key(x));
+  }
+}
+
+
 
 export default Reflux.createStore({
 
@@ -29,11 +66,12 @@ export default Reflux.createStore({
   _timer: null,
   _interval: null,
   _timeout: 25,
-  _start: moment("2015-01-01", "YYYY-MM-DD"),
-  _end: moment("2015-10-15", "YYYY-MM-DD"),
+  _start: Moment("2015-01-01", "YYYY-MM-DD"),
+  _end: Moment("2015-10-15", "YYYY-MM-DD"),
+  _dayId: 0,
 
   init() {
-    this._range = moment.range(this._start, this._end);
+    this._range = Moment.range(this._start, this._end);
     this._currentFocus = this._start.month();
     this.fetchDays();
   },
@@ -104,40 +142,57 @@ export default Reflux.createStore({
     this._dayRects[i] = rect;
   },
 
-  buildDays(daysData) {
-    this._days = [];
-    var daysConfig = {};
 
-    daysData.forEach((d) => {
-      daysConfig[d.date] = d;
-    });
+  buildDays(config) {
+    // reset days
+    this._days = [];
 
     this._range.by("days", (dayMoment) => {
-      var key = dayMoment.format(constants.DATE_ID_FORMAT);
-      var config = daysConfig[key] || {};
 
-      var dayRec = new DayRecord({
-        key: key,
-        isFirst: dayMoment.date() == 1,
-        moment: dayMoment,
-        path: "/day/" + key,
-        type: config.type || "",
-        backgroundImage: config.backgroundImage || "",
-      });
+      if (!config.has(dayMoment)) {
+        this.addDay(dayMoment);
+      } else {
+        config.get(dayMoment).forEach((d) => {
+          this.addDay(dayMoment, d);
+        });
+      }
 
-      this._days.push(dayRec);
     });
 
     this._triggerData();
   },
 
-  fetchDays() {
 
+  addDay(dayMoment, extra) {
+    var id = this._dayId++;
+    console.log(id, dayMoment.format('MMM D'));
+
+    var config = jQuery.extend({
+      id: id,
+      moment: dayMoment,
+      isFirst: dayMoment.date() == 1,
+      path: "/day/" + id,
+    }, extra);
+
+    this._days.push(new DayRecord(config));
+  },
+
+
+  fetchDays() {
     jQuery.ajax({
       url: '/data.json',
       dataType: 'json',
       cache: false,
-      success: this.buildDays
+      context: this,
+      success: function(data) {
+        var config = new DaysConfig();
+
+        data.forEach((d) => {
+          config.add(d.date, d);
+        });
+
+        this.buildDays(config);
+      }
     });
   },
 

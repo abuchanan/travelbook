@@ -115,7 +115,7 @@ const Calendar = React.createClass({
   },
 /*
       return (
-        <FocusWrapper focused={this.state.focused} day={day} key={day.key}>
+        <FocusWrapper focused={this.state.focused} day={day} key={day.id}>
           <Day day={day} />
         </FocusWrapper>
       );
@@ -131,11 +131,13 @@ const Calendar = React.createClass({
     var children = [];
 
     this.state.days.forEach((day) => {
+      // TODO should I add the month card here, or generate it in the store
+      //      as just another type of day/card?
       if (day.isFirst) {
-        children.push(<MonthMarker month={day.moment} key={day.key + "-month"} />);
+        children.push(<MonthMarker month={day.moment} key={day.id + "-month"} />);
       }
 
-      children.push(<Day day={day} key={day.key} />);
+      children.push(<Day day={day} key={day.id} />);
     });
 
     return (<div className="calendar" onScroll={CalendarActions.scroll}
