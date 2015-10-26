@@ -2,14 +2,17 @@ import Reflux from 'reflux';
 import moment from 'moment';
 import 'moment-range';
 import Immutable from 'immutable';
+import jQuery from 'jquery';
 
 import CalendarActions from '../actions/calendar';
 import * as constants from '../scripts/constants';
 
 var DayRecord = Immutable.Record({
   key: "",
+  isFirst: false,
   moment: null,
   focused: false,
+  type: "",
   path: "",
   backgroundImage: "",
 });
@@ -36,13 +39,14 @@ export default Reflux.createStore({
   },
 
   _resolveFocus() {
-    console.log('resolvin');
 
     var nextFocus = -1;
 
     for (var i = 0; i < this._dayRects.length; i++) {
       var dr = this._dayRects[i];
 
+      // TODO bug: this is the *total* calendar height, not the visible height
+      // TODO bug: doesn't handle case where first/last section can't pass middle line
       if (dr.top >= this._calendarRect.top && dr.top <= this._calendarRect.bottom) {
 
         var p = this._calendarRect.bottom - dr.top;
@@ -70,7 +74,6 @@ export default Reflux.createStore({
 
   _scrollFinished() {
     //this._resolveFocus();
-    console.log('scroll end');
     clearInterval(this._interval);
     this._interval = null;
   },
@@ -101,18 +104,25 @@ export default Reflux.createStore({
     this._dayRects[i] = rect;
   },
 
-
-  fetchDays() {
-
+  buildDays(daysData) {
     this._days = [];
+    var daysConfig = {};
+
+    daysData.forEach((d) => {
+      daysConfig[d.date] = d;
+    });
 
     this._range.by("days", (dayMoment) => {
+      var key = dayMoment.format(constants.DATE_ID_FORMAT);
+      var config = daysConfig[key] || {};
 
       var dayRec = new DayRecord({
-        key: dayMoment.valueOf(),
+        key: key,
+        isFirst: dayMoment.date() == 1,
         moment: dayMoment,
-        path: "/day/" + dayMoment.format(constants.DATE_ID_FORMAT),
-        backgroundImage: "images/thumb1.jpg",
+        path: "/day/" + key,
+        type: config.type || "",
+        backgroundImage: config.backgroundImage || "",
       });
 
       this._days.push(dayRec);
@@ -121,9 +131,19 @@ export default Reflux.createStore({
     this._triggerData();
   },
 
+  fetchDays() {
+
+    jQuery.ajax({
+      url: '/data.json',
+      dataType: 'json',
+      cache: false,
+      success: this.buildDays
+    });
+  },
+
 
   _triggerData() {
-    this._data = {days: this._days, focusedMonth: this._currentFocus};
+    this._data = {days: this._days, focused: this._currentFocus};
     this.trigger(this._data);
   }
 });

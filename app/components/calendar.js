@@ -2,22 +2,65 @@ import React from 'react';
 import Reflux from 'reflux';
 import { Link } from 'react-router';
 import PureRenderMixin from 'react-addons-pure-render-mixin';
+import buildClassNames from 'classnames';
 
 import CalendarStore from '../stores/calendar';
 import CalendarActions from '../actions/calendar';
 import * as constants from '../scripts/constants';
 
 
+// TODO mixing focus and first day position communication here
+//      could separate if wanting to have other kinds of focus
 const FocusWrapper = React.createClass({
+
+  setContainerRef(r) {
+    this.containerRef = r;
+  },
+
+  sendRect() {
+    CalendarActions.setDayRect(this.props.day, this.containerRef.getBoundingClientRect());
+  },
+
+  componentDidMount: function() {
+    if (this.props.day.isFirst) {
+      this.unsubscribe = CalendarActions.scroll.listen(this.sendRect);
+      // TODO could simplify by having the store init send an initial scroll event
+      this.sendRect()
+    }
+  },
+
+  componentWillUnmount: function() {
+    if (this.unsubscribe) {
+      this.unsubscribe();
+    }
+  },
+
   render() {
 
-    if (this.props.focused) {
+    // TODO forcing focused to have one meaning. could make it a set that contains
+    //      references to days or day/card keys to make it more generic
+    if (this.props.focused == this.props.day.moment.month().date()) {
       var className = "focused";
     } else {
       var className = "unfocused";
     }
 
-    return <div className={className}>{this.props.children}</div>;
+    return <div className={className} ref={this._setContainerRef}>{this.props.children}</div>;
+  }
+});
+
+
+const MonthMarker = React.createClass({
+  render() {
+    var dateStr = this.props.month.format("MMMM");
+
+    return (
+      <div className="day-container">
+        <div className="month-marker">
+          <div className="month-name">{dateStr}</div>
+        </div>
+      </div>
+    );
   }
 });
 
@@ -26,54 +69,21 @@ const Day = React.createClass({
 
   mixins: [PureRenderMixin],
 
-  isFirstDay: function() {
-    return this.props.day.moment.date() == 1;
-  },
-
-  _setContainerRef(r) {
-    this._containerRef = r;
-  },
-
-  handleScroll() {
-    CalendarActions.setDayRect(this.props.day, this._containerRef.getBoundingClientRect());
-  },
-
-  componentDidMount: function() {
-    if (this.isFirstDay()) {
-      this._unsubscribeScroll = CalendarActions.scroll.listen(this.handleScroll);
-    }
-    CalendarActions.setDayRect(this.props.day, this._containerRef.getBoundingClientRect());
-  },
-
-  componentWillUnmount: function() {
-    if (this._unsubscribeScroll) {
-      this._unsubscribeScroll();
-    }
-  },
-
   render() {
-    console.log('day render');
-
     var day = this.props.day;
-    var style = {
-      backgroundImage: "url(" + day.backgroundImage + ")",
-    };
+    var style = {};
+    var dateStr = day.moment.format("D");
+    var classNames = buildClassNames("day", day.type);
 
-    // The first day of the month gets a date string, e.g. "Jan 1"
-    // otherwise it's just the date number, e.g. "1"
-    if (this.isFirstDay()) {
-      var dateStr = day.moment.format("MMM D");
-    } else {
-      var dateStr = day.moment.format("D");
+    if (day.backgroundImage != "") {
+      style.backgroundImage = "url(" + day.backgroundImage + ")";
     }
 
     return (
-      <div className="day-container" ref={this._setContainerRef}>
+      <div className="day-container">
       <Link to={day.path}>
-        <div className="day" style={style}>
-          <div className="date-row">
-            <div className="date">{dateStr}</div>
-          </div>
+        <div className={classNames} style={style}>
+          <div className="date">{dateStr}</div>
         </div>
       </Link>
       </div>
@@ -82,40 +92,56 @@ const Day = React.createClass({
 });
 
 
-export default React.createClass({
+const Calendar = React.createClass({
 
   mixins: [Reflux.connect(CalendarStore)],
 
-  handleScroll(event) {
-    var scrollTop = this._containerRef.offsetTop;
-    CalendarActions.scroll(event);
+  // TODO would love to extract this into its own component
+  componentDidMount() {
+    window.addEventListener("scroll", CalendarActions.scroll);
+
+    if (this._containerRef) {
+      // TODO handle resize
+      CalendarActions.setCalendarRect(this._containerRef.getBoundingClientRect());
+    }
   },
 
-  componentDidMount() {
-    CalendarActions.setCalendarRect(this._containerRef.getBoundingClientRect());
+  componentWillUnmount() {
+    window.removeEventListener("scroll", CalendarActions.scroll);
   },
 
   _setContainerRef(r) {
     this._containerRef = r;
   },
+/*
+      return (
+        <FocusWrapper focused={this.state.focused} day={day} key={day.key}>
+          <Day day={day} />
+        </FocusWrapper>
+      );
+      */
+
+
 
   render() {
     if (!this.state.days) {
       return <div>none</div>;
     }
 
-    var days = this.state.days.map((day) => {
+    var children = [];
 
-      var focused = day.moment.month() == this.state.focusedMonth;
-      return (
-        <FocusWrapper focused={focused} key={day.key}>
-          <Day day={day} />
-        </FocusWrapper>
-      );
+    this.state.days.forEach((day) => {
+      if (day.isFirst) {
+        children.push(<MonthMarker month={day.moment} key={day.key + "-month"} />);
+      }
+
+      children.push(<Day day={day} key={day.key} />);
     });
 
-    return (<div className="calendar" onScroll={this.handleScroll}
-                 ref={this._setContainerRef}>{days}</div>);
+    return (<div className="calendar" onScroll={CalendarActions.scroll}
+                 ref={this._setContainerRef}>{children}</div>);
   }
 
 });
+
+export default Calendar;

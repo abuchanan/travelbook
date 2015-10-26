@@ -14,8 +14,7 @@ body {
   flex-wrap: wrap;
   -webkit-flex-wrap: wrap;
 
-  height: 500px;
-  overflow-y: scroll;
+  height: 90vh;
 }
 
 .focused {
@@ -25,33 +24,48 @@ body {
   opacity: 0.1;
 }
 
+
 .day-container {
   flex-grow: 1;
   min-width: 150px;
-}
-
-.day {
   height: 150px;
-  background-color: blue;
-  background-size: cover;
   border: 1px solid black;
 }
 
-#day-12 {
-  background-image: url("thumb1.jpg");
+.day {
+  background-size: cover;
+  height: 100%;
+  width: 100%;
 }
 
-#day-13 {
-  background-image: url("thumb2.jpg");
-}
-
-.date-row {
-}
-
-.date {
-  color: white;
+.date, .month-name {
+  color: #e0e0e0;
   background-color: #1d1d1d;
   padding: 0 5px;
   float: right;
   border-radius: 0 0 0 3px;
+}
+
+.date {
+  opacity: 0.1;
+}
+
+.day:hover .date {
+  opacity: 1;
+}
+
+.day.airplane {
+  background-image: url("/images/airplane-icon.gif");
+}
+
+.day.train {
+  background-image: url("/images/train-icon.jpg");
+}
+
+.day.bus {
+  background-image: url("/images/bus-icon.png");
+}
+
+.day.book {
+  background-image: url("/images/book-icon.png");
 }
