@@ -112,6 +112,7 @@
   },
   {
     "description": "Bus to Besi Sahar. Walk to Bhulbhule",
+    "type": "bus",
     "date": "2015-09-19T00:00:00.000Z"
   },
   {
@@ -177,6 +178,7 @@
   },
   {
     "description": "Bus back to Leh. Markets",
+    "type": "bus",
     "date": "2015-08-29T00:00:00.000Z"
   },
   {
@@ -228,6 +230,7 @@
   },
   {
     "description": "Arrive in Mcleod Ganj after a very tiring day of bus travel.",
+    "type": "bus",
     "date": "2015-08-12T00:00:00.000Z"
   },
   {
@@ -273,6 +276,7 @@
   },
   {
     "description": "Movies all day. Overnight bus to Aurangabad ",
+    "type": "bus",
     "date": "2015-08-04T00:00:00.000Z"
   },
   {
@@ -424,19 +428,13 @@
     "date": "2015-06-05T00:00:00.000Z"
   },
   {
-    "description": "Travel to Jakarta. Handa Muay Thai training.",
-    "date": "2015-06-04T00:00:00.000Z"
-  },
-  {
     "description": "Flight to Jakarta",
+    "type": "flight",
     "date": "2015-06-04T00:00:00.000Z"
-  },
-  {
-    "description": "Travel to Bangkok",
-    "date": "2015-06-03T00:00:00.000Z"
   },
   {
     "description": "Flight to Bangkok",
+    "type": "flight",
     "date": "2015-06-03T00:00:00.000Z"
   },
   {
@@ -461,6 +459,7 @@
   },
   {
     "description": "Bus to Chiang Mai. Go out with Belgians and Canadians",
+    "type": "bus",
     "date": "2015-05-29T00:00:00.000Z"
   },
   {
@@ -498,6 +497,7 @@
   },
   {
     "description": "Morning trips with Lau. Bus to Georgetown, Penang.",
+    "type": "bus",
     "date": "2015-05-20T00:00:00.000Z"
   },
   {
@@ -523,6 +523,7 @@
   },
   {
     "description": "Bus to Ipoh. Street art and food.",
+    "type": "bus",
     "date": "2015-05-15T00:00:00.000Z"
   },
   {
@@ -552,10 +553,12 @@
   },
   {
     "description": "Bus to Cameron Highlands. Stay at Hillview Inn. Catch up on thin",
+    "type": "bus",
     "date": "2015-05-09T00:00:00.000Z"
   },
   {
     "description": "Travel all day. Ferry to Mersing, bus to Kuantan, bus to Ipoh.",
+    "type": "bus",
     "date": "2015-05-08T00:00:00.000Z"
   },
   {
@@ -594,6 +597,7 @@
   },
   {
     "description": "Leave for Malaysia. Intense travel day. Hours of buses and immig",
+    "type": "bus",
     "date": "2015-05-01T00:00:00.000Z"
   },
   {
@@ -679,6 +683,7 @@
   },
   {
     "description": "Airport",
+    "type": "airplane",
     "date": "2015-03-29T00:00:00.000Z"
   },
   {
