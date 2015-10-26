@@ -83,7 +83,6 @@ const Day = React.createClass({
       <div className="day-container">
       <Link to={day.path}>
         <div className={classNames} style={style}>
-          <div className="date">{dateStr}</div>
         </div>
       </Link>
       </div>

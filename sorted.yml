@@ -1,14 +1,14 @@
 ---
 date: 2015-10-16
-type: flight
+type: airplane
 description: Fly to Jakarta
 ---
 date: 2015-10-15
-type: flight
+type: airplane
 description: Flight to Kuala Lumpur
 ---
 date: 2015-10-14
-type: flight
+type: airplane
 description: Fly to Delhi
 ---
 description: Stay at Hotel Delhi Aerocity
@@ -21,7 +21,7 @@ date: 2015-10-10
 description: 'Pokhara. Meet max, liz, Australian dudes, and Jesus. Great ni'
 date: 2015-10-07
 ---
-description: 'Ghandruk '
+description: Ghandruk
 date: 2015-10-06
 ---
 date: 2015-10-06
@@ -91,14 +91,11 @@ date: 2015-09-19
 description: Prepare for trek.
 date: 2015-09-18
 ---
+description: Fly to Kathmandu
 date: 2015-09-17
 type: airplane
-description: Fly to Kathmandu
 ---
-description: 'Fly to Kathmandu '
-date: 2015-09-17
----
-description: Last day of trek over pass. Return to Leh
+description: Last day of trek over Gangmaru La pass. Return to Leh
 date: 2015-09-13
 ---
 description: Trek to Nymaling
@@ -188,13 +185,12 @@ date: 2015-08-11
 description: 'Golden Temple. '
 date: 2015-08-11
 ---
-date: 2015-08-10
-type: train
----
 description: Train to Amritsar
+type: train
 date: 2015-08-10
 ---
 description: Jalgaon hotel work. Train to surat
+type: train
 date: 2015-08-09
 ---
 description: Jalgaon hotel lazy
@@ -246,9 +242,9 @@ date: 2015-07-15
 description: Sick
 date: 2015-07-14
 ---
+description: White Fang
 date: 2015-07-13
 type: book
-description: White Fang
 ---
 description: Sick. 
 date: 2015-07-13
@@ -256,16 +252,9 @@ date: 2015-07-13
 description: 'Hang out a Bastian homestay. Read lots, sleep lots. Sunset at b'
 date: 2015-07-12
 ---
-description: Flight to Kochi
+description: Flight to Kochi, India
 date: 2015-07-11
----
-date: 2015-07-11
-type: flight
-description: Fly to India
----
-description: Fly to India. Stay at Bastian Homestay
-type: flight
-date: 2015-07-11
+type: airplane
 ---
 description: Picked up Indian visa. Went shopping . Drinks with Diane and Pau
 date: 2015-07-10
@@ -288,15 +277,9 @@ date: 2015-07-02
 description: Scramble around preparing Indian visa. Move to Bodega hostel.
 date: 2015-07-01
 ---
-description: Flight to Bangkok
-date: 2015-06-30
----
 description: Fly to Bangkok. Meet Jukka. All you can eat and rooftop beers. S
+type: airplane
 date: 2015-06-30
----
-date: 2015-06-30
-type: flight
-description: Fly to Bangkok
 ---
 date: 2015-06-25
 type: book
@@ -321,11 +304,11 @@ description: Handa Muay Thai training.
 date: 2015-06-04
 ---
 description: Flight to Jakarta
-type: flight
+type: airplane
 date: 2015-06-04
 ---
 description: Flight to Bangkok
-type: flight
+type: airplane
 date: 2015-06-03
 ---
 description: 'Lazy day. Temple. Freddy and Brecht have awesome jam session at '
@@ -361,6 +344,7 @@ description: 'Arrive in Bangkok. Meet Jason and Brian on train. Meet Kelly, J'
 date: 2015-05-24
 ---
 description: Train to Bangkok
+type: train
 date: 2015-05-23
 ---
 description: 'Penang. Arrange train to Bangkok. Move to Small Inn. Meet Peter '
@@ -512,7 +496,7 @@ date: 2015-03-31
 description: Arrive in Bali
 date: 2015-03-30
 ---
-description: Airport
+description: Fly to Bali
 type: airplane
 date: 2015-03-29
 ---
@@ -599,6 +583,7 @@ date: 2015-02-26
 ---
 description: Liverpool Hut
 date: 2015-02-25
+backgroundImage: "/images/liverpool-icon.jpeg"
 ---
 description: 'Mutukituki Valley, Aspiring Hut'
 date: 2015-02-24
@@ -734,6 +719,7 @@ date: 2015-01-11
 ---
 description: Run the Jewels concert
 date: 2015-01-10
+backgroundImage: "/images/rtj-icon.jpeg"
 ---
 description: Biscuits in Auckland
 date: 2015-01-09
