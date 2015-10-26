@@ -1,6 +1,5 @@
 var gulp          = require('gulp');
 var browserify    = require('browserify-incremental');
-var rt = require('gulp-react-templates');
 var del           = require('del');
 var source        = require('vinyl-source-stream');
 var runSequence   = require('run-sequence');
@@ -19,7 +18,7 @@ gulp.task('copy', function() {
 
   var toCopy = [
     'app/**/*.js', 'app/styles/**/*.css', 'app/index.html',
-    'app/images/**', 'app/html/**',
+    'app/images/**', 'app/html/**', 'app/data.json',
   ];
 
   return gulp
@@ -28,11 +27,13 @@ gulp.task('copy', function() {
 });
 
 
+gulp.task('yaml2json', function() {
+});
+
 gulp.task('browserify', function() {
   var browserifyConfig = {
     entries: ['./build/scripts/app.js'],
-    extensions: ['.rt.js'],
-    cacheFile: './build/browserify-incremental-cache.json',
+    cacheFile: './browserify-incremental-cache.json',
   };
 
   return browserify(browserifyConfig)
@@ -40,14 +41,6 @@ gulp.task('browserify', function() {
     .bundle()
     .pipe(source('bundle.js'))
     .pipe(gulp.dest(BUILD_DIR))
-});
-
-
-gulp.task('rt', function() {
-  return gulp
-    .src('app/components/**/*.rt', {base: './app'})
-    .pipe(rt({modules: "commonjs"}))
-    .pipe(gulp.dest(BUILD_DIR));
 });
 
 
@@ -60,7 +53,6 @@ gulp.task('serve', function() {
 gulp.task('build', function() {
 
   runSequence('clean:dev',
-//              'rt',
               'copy',
               'browserify');
 });
