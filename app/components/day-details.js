@@ -4,30 +4,51 @@ import moment from 'moment';
 
 import DayDetailsStore from '../stores/day-details';
 import DayActions from '../actions/day';
+import CalendarActions from '../actions/calendar';
 import * as constants from '../scripts/constants';
+
+
+const Image = React.createClass({
+
+  handleClick() {
+    CalendarActions.setDayImage(this.props.dayID, this.props.src);
+  },
+
+  render() {
+    var src = this.props.src;
+    return (<img onClick={this.handleClick}
+                 className="image-select"
+                 src={src} />);
+  }
+});
 
 
 export default React.createClass({
 
   mixins: [Reflux.connect(DayDetailsStore)],
 
-  componentDidMount() {
-    const date_ID = this.props.params.id;
-    const date = moment(date_ID, constants.DATE_ID_FORMAT);
-    console.log('mount');
-    DayActions.loadDate(date);
-  },
-
-  _getHtml() {
-    if (this.state.html) {
-      var htmlStr = this.state.html;
-    } else {
-      var htmlStr = "Loading";
-    }
-    return {__html: htmlStr};
-  },
-
   render() {
-    return <div dangerouslySetInnerHTML={this._getHtml()}></div>;
+    if (!this.state.day) {
+      return <div>Loading</div>;
+    }
+
+    var day = this.state.day;
+    var images = [];
+
+    this.state.imageCollection.forEach((path) => {
+      images.push(<Image dayID={day.id} src={path} key={path} />);
+    });
+
+    var src = this.state.day.backgroundImage;
+
+    return (<div>
+      <div>{day.description}</div>
+      <div>
+        <button onClick={DayActions.gotoPrevious}>Previous</button>
+        <button onClick={DayActions.gotoNext}>Next</button>
+      </div>
+      <div><img className="image-select" src={src} /></div>
+      <div>{images}</div>
+    </div>);
   }
 });

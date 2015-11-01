@@ -22,11 +22,9 @@ const FocusWrapper = React.createClass({
   },
 
   componentDidMount: function() {
-    if (this.props.day.isFirst) {
-      this.unsubscribe = CalendarActions.scroll.listen(this.sendRect);
-      // TODO could simplify by having the store init send an initial scroll event
-      this.sendRect()
-    }
+    this.unsubscribe = CalendarActions.scroll.listen(this.sendRect);
+    // TODO could simplify by having the store init send an initial scroll event
+    this.sendRect()
   },
 
   componentWillUnmount: function() {
@@ -75,7 +73,8 @@ const Day = React.createClass({
     var dateStr = day.moment.format("D");
     var classNames = buildClassNames("day", day.type);
 
-    if (day.backgroundImage != "") {
+    if (day.backgroundImage) {
+      console.log(day.backgroundImage);
       style.backgroundImage = "url(" + day.backgroundImage + ")";
     }
 
@@ -128,11 +127,13 @@ const Calendar = React.createClass({
     }
 
     var children = [];
+    var month = -1;
 
     this.state.days.forEach((day) => {
       // TODO should I add the month card here, or generate it in the store
       //      as just another type of day/card?
-      if (day.isFirst) {
+      if (day.moment.month() > month) {
+        month = day.moment.month();
         children.push(<MonthMarker month={day.moment} key={day.id + "-month"} />);
       }
 

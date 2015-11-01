@@ -7,50 +7,15 @@ import jQuery from 'jquery';
 import CalendarActions from '../actions/calendar';
 import * as constants from '../scripts/constants';
 
+
 var DayRecord = Immutable.Record({
   id: 0,
-  isFirst: false,
   moment: null,
-  type: "",
   path: "",
+  type: "",
   backgroundImage: "",
+  description: "",
 });
-
-
-class DaysConfig {
-  constructor() {
-    this._data = new Map();
-  }
-
-  _get_or_create(key) {
-    var entry = this._data.get(key);
-    if (!entry) {
-      entry = [];
-      this._data.set(key, entry);
-    }
-    return entry;
-  }
-
-  _key(x) {
-    var moment = Moment(x);
-    return moment.format(constants.DATE_ID_FORMAT);
-  }
-
-  add(x, config) {
-    this._get_or_create(this._key(x)).push(config);
-  }
-
-  get(x) {
-    if (!this.has(x)) {
-      return [];
-    }
-    return this._data.get(this._key(x));
-  }
-
-  has(x) {
-    return this._data.has(this._key(x));
-  }
-}
 
 
 
@@ -66,14 +31,103 @@ export default Reflux.createStore({
   _timer: null,
   _interval: null,
   _timeout: 25,
-  _start: Moment("2015-01-01", "YYYY-MM-DD"),
-  _end: Moment("2015-10-15", "YYYY-MM-DD"),
-  _dayId: 0,
 
   init() {
-    this._range = Moment.range(this._start, this._end);
-    this._currentFocus = this._start.month();
     this.fetchDays();
+  },
+
+
+  getInitialState() {
+    return this._data;
+  },
+
+  buildDays(days) {
+    // reset days
+    this._days = [];
+
+    days.forEach((day) => {
+      var id = this._days.length;
+
+      var rec = new DayRecord({
+        id: id,
+        moment: Moment(day.moment),
+        path: "/day/" + id,
+        type: day.type,
+        backgroundImage: day.backgroundImage,
+        description: day.description,
+      });
+
+      this._days.push(rec);
+    });
+
+    this._triggerData();
+  },
+
+  getDay(ID) {
+    console.log('get day');
+    return this._days[ID];
+  },
+
+
+  setDayImage(id, src) {
+    this._days[id] = this._days[id].set('backgroundImage', src);
+    this._triggerData();
+    this.save();
+  },
+
+  save() {
+    var data = [];
+    this._days.forEach((d) => { 
+      var j = d.toJSON();
+      data.push(j);
+    });
+    var json = JSON.stringify(data);
+
+    jQuery.ajax({
+      type: "POST",
+      url: '/save',
+      dataType: 'json',
+      data: {days: data},
+      cache: false,
+      context: this,
+      success: function(data) {
+        console.log('saved');
+      }
+    });
+  },
+
+
+  fetchDays() {
+    jQuery.ajax({
+      url: '/data.json',
+      dataType: 'json',
+      cache: false,
+      context: this,
+      success: function(data) {
+        console.log('fetched');
+        this.buildDays(data.days);
+      }
+    });
+  },
+
+
+  _triggerData() {
+    this._data = {days: this._days, focused: this._currentFocus};
+    this.trigger(this._data);
+  },
+
+
+
+
+///////////////////////////////////
+
+  setCalendarRect(rect) {
+    this._calendarRect = rect;
+  },
+
+  setDayRect(day, rect) {
+    var i = day.moment.month();
+    this._dayRects[i] = rect;
   },
 
   _resolveFocus() {
@@ -127,78 +181,4 @@ export default Reflux.createStore({
     }
     this._timer = setTimeout(this._scrollFinished, this._timeout);
   },
-
-
-  getInitialState() {
-    return this._data;
-  },
-
-  setCalendarRect(rect) {
-    this._calendarRect = rect;
-  },
-
-  setDayRect(day, rect) {
-    var i = day.moment.month();
-    this._dayRects[i] = rect;
-  },
-
-
-  buildDays(config) {
-    // reset days
-    this._days = [];
-
-    this._range.by("days", (dayMoment) => {
-
-      if (!config.has(dayMoment)) {
-        this.addDay(dayMoment);
-      } else {
-        config.get(dayMoment).forEach((d) => {
-          this.addDay(dayMoment, d);
-        });
-      }
-
-    });
-
-    this._triggerData();
-  },
-
-
-  addDay(dayMoment, extra) {
-    var id = this._dayId++;
-    console.log(id, dayMoment.format('MMM D'));
-
-    var config = jQuery.extend({
-      id: id,
-      moment: dayMoment,
-      isFirst: dayMoment.date() == 1,
-      path: "/day/" + id,
-    }, extra);
-
-    this._days.push(new DayRecord(config));
-  },
-
-
-  fetchDays() {
-    jQuery.ajax({
-      url: '/data.json',
-      dataType: 'json',
-      cache: false,
-      context: this,
-      success: function(data) {
-        var config = new DaysConfig();
-
-        data.forEach((d) => {
-          config.add(d.date, d);
-        });
-
-        this.buildDays(config);
-      }
-    });
-  },
-
-
-  _triggerData() {
-    this._data = {days: this._days, focused: this._currentFocus};
-    this.trigger(this._data);
-  }
 });

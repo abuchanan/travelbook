@@ -1,5 +1,6 @@
 body {
   background-color: #1d1d1d;
+  color: #eee;
 }
 
 #app-container {
@@ -28,6 +29,7 @@ body {
 .day-container {
   flex-grow: 1;
   min-width: 200px;
+  max-width: 225px;
   height: 200px;
   border: 1px solid #252525;
 }
@@ -68,4 +70,12 @@ body {
 
 .day.book {
   background-image: url("/images/book-icon.png");
+}
+
+.image-select {
+  width: 250px;
+}
+
+button {
+  color: #333;
 }
