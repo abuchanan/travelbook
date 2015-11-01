@@ -21,7 +21,8 @@ app.post('/save', function (req, res) {
   console.log('save', req.body);
   var path = __dirname + '/data/' + Date.now() + '.json';
   fs.writeFileSync(path, JSON.stringify(req.body));
-
+  var path = __dirname + '/build/data.json';
+  fs.writeFileSync(path, JSON.stringify(req.body));
 });
 
 // handle every other route with index.html, which will contain

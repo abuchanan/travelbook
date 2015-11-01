@@ -27,6 +27,10 @@ export default React.createClass({
 
   mixins: [Reflux.connect(DayDetailsStore)],
 
+  updateFilter(event) {
+    DayActions.setFilter(event.target.value);
+  },
+
   render() {
     if (!this.state.day) {
       return <div>Loading</div>;
@@ -43,6 +47,9 @@ export default React.createClass({
 
     return (<div>
       <div>{day.description}</div>
+      <div>
+        <input type="text" onChange={this.updateFilter} autoFocus />
+      </div>
       <div>
         <button onClick={DayActions.gotoPrevious}>Previous</button>
         <button onClick={DayActions.gotoNext}>Next</button>

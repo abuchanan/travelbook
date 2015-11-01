@@ -13,6 +13,7 @@ import * as constants from '../scripts/constants';
 export default Reflux.createStore({
 
   listenables: [DayActions, CalendarActions],
+  allImages:[],
   _data: {
     imageCollection: [],
     day: null,
@@ -44,6 +45,18 @@ export default Reflux.createStore({
     }
   },
 
+  setFilter(filter) {
+    var filtered = [];
+    var rx = new RegExp(filter, "i");
+    this.allImages.forEach((path) => {
+      if (rx.test(path)) {
+        filtered.push(path);
+      }
+    });
+    this._data.imageCollection = filtered;
+    this.triggerData();
+  },
+
   gotoPrevious() {
     if (this._data.day !== null) {
       var previousID = this._data.day.id - 1;
@@ -58,12 +71,13 @@ export default Reflux.createStore({
         cache: false,
         context: this,
         success: function(data) {
-            this._data.imageCollection = data.map((path) => {
+            this.allImages = data.map((path) => {
               if (path[0] != "/") {
                 path = "/" + path;
               }
               return path;
             });
+            this._data.imageCollection = this.allImages;
             this.triggerData();
         }
     });
