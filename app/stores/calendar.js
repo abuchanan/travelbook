@@ -4,7 +4,7 @@ import 'moment-range';
 import Immutable from 'immutable';
 import jQuery from 'jquery';
 
-import CalendarActions from '../actions/calendar';
+import { CalendarActions } from '../actions';
 import * as constants from '../scripts/constants';
 
 
@@ -14,6 +14,7 @@ var DayRecord = Immutable.Record({
   path: "",
   type: "",
   backgroundImage: "",
+  thumb: "",
   description: "",
 });
 
@@ -54,6 +55,7 @@ export default Reflux.createStore({
         path: "/day/" + id,
         type: day.type,
         backgroundImage: day.backgroundImage,
+        thumb: day.backgroundImage,
         description: day.description,
       });
 
@@ -69,8 +71,11 @@ export default Reflux.createStore({
   },
 
 
-  setDayImage(id, src) {
-    this._days[id] = this._days[id].set('backgroundImage', src);
+  setDayImage(id, img) {
+    var d = this._days[id]
+      .set('backgroundImage', img.full)
+      .set("thumb", img.thumb);
+    this._days[id] = d;
     this._triggerData();
     this.save();
   },

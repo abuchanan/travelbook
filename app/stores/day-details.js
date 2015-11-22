@@ -4,8 +4,7 @@ import "moment-range";
 import jQuery from "jquery";
 
 import { history } from '../scripts/routes';
-import DayActions from "../actions/day";
-import CalendarActions from "../actions/calendar";
+import { DayActions, CalendarActions } from "../actions";
 import CalendarStore from "../stores/calendar";
 import * as constants from '../scripts/constants';
 
@@ -48,9 +47,9 @@ export default Reflux.createStore({
   setFilter(filter) {
     var filtered = [];
     var rx = new RegExp(filter, "i");
-    this.allImages.forEach((path) => {
-      if (rx.test(path)) {
-        filtered.push(path);
+    this.allImages.forEach((img) => {
+      if (rx.test(img.path)) {
+        filtered.push(img);
       }
     });
     this._data.imageCollection = filtered;
@@ -75,7 +74,11 @@ export default Reflux.createStore({
               if (path[0] != "/") {
                 path = "/" + path;
               }
-              return path;
+              return {
+                path: path,
+                full: encodeURI("/image-collection" + path),
+                thumb: encodeURI("/thumbnails" + path),
+              };
             });
             this._data.imageCollection = this.allImages;
             this.triggerData();

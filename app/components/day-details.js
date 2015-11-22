@@ -1,24 +1,21 @@
 import React from 'react';
 import Reflux from 'reflux';
-import moment from 'moment';
 
 import DayDetailsStore from '../stores/day-details';
-import DayActions from '../actions/day';
-import CalendarActions from '../actions/calendar';
+import { DayActions, CalendarActions } from '../actions';
 import * as constants from '../scripts/constants';
 
 
 const Image = React.createClass({
 
   handleClick() {
-    CalendarActions.setDayImage(this.props.dayID, this.props.src);
+    CalendarActions.setDayImage(this.props.dayID, this.props.img);
   },
 
   render() {
-    var src = this.props.src;
     return (<img onClick={this.handleClick}
                  className="image-select"
-                 src={src} />);
+                 src={this.props.img.thumb} />);
   }
 });
 
@@ -39,11 +36,11 @@ export default React.createClass({
     var day = this.state.day;
     var images = [];
 
-    this.state.imageCollection.forEach((path) => {
-      images.push(<Image dayID={day.id} src={path} key={path} />);
+    this.state.imageCollection.forEach((img) => {
+      images.push(<Image dayID={day.id} img={img} key={img.thumb} />);
     });
 
-    var src = this.state.day.backgroundImage;
+    var src = this.state.day.thumb;
 
     return (<div>
       <div>{day.description}</div>

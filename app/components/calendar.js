@@ -3,9 +3,10 @@ import Reflux from 'reflux';
 import { Link } from 'react-router';
 import PureRenderMixin from 'react-addons-pure-render-mixin';
 import buildClassNames from 'classnames';
+import Moment from 'moment';
 
 import CalendarStore from '../stores/calendar';
-import CalendarActions from '../actions/calendar';
+import { CalendarActions } from '../actions';
 import * as constants from '../scripts/constants';
 
 
@@ -127,14 +128,15 @@ const Calendar = React.createClass({
     }
 
     var children = [];
-    var month = -1;
+    var currentMonth = Moment("01-01-1970", "MM-DD-YYYY");
 
     this.state.days.forEach((day) => {
+      var month = day.moment.clone().startOf('month');
       // TODO should I add the month card here, or generate it in the store
       //      as just another type of day/card?
-      if (day.moment.month() > month) {
-        month = day.moment.month();
-        children.push(<MonthMarker month={day.moment} key={day.id + "-month"} />);
+      if (month > currentMonth) {
+        currentMonth = month;
+        children.push(<MonthMarker month={month} key={month.format()} />);
       }
 
       children.push(<Day day={day} key={day.id} />);
