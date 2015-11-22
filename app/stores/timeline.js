@@ -16,14 +16,14 @@ class Track {
     this.lastValue = this.noValue;
   }
 
-  addKeyframe(time, value) {
+  addKeyframe(time, value, transition) {
     for (var i = 0; i < this.keyframes.length; i++) {
       var keyframe = this.keyframes[i];
 
       if (keyframe[0] == time) {
         keyframes[1] = value;
       } else if (time < keyframe[0]) {
-        this.keyframes.splice(i, 0, [time, value]);
+        this.keyframes.splice(i, 0, [time, value, transition]);
         return;
       }
     }
@@ -41,9 +41,19 @@ class Track {
       i -= 1;
     }
     var value = this.keyframes[i][1];
-    if (typeof value == "function") {
-      value = value(time);
+
+    // If this isn't the last keyframe, look for a transition.
+    // Clearly, we can't transition after the last keyframe because
+    // there's no value to transition _to_.
+    if (i < this.keyframes.length - 1) {
+      var transition = this.keyframes[i][2];
+
+      if (transition) {
+        var nextValue = this.keyframes[i + 1][1];
+        value = transition(time, value, nextValue);
+      }
     }
+
     if (value !== this.lastValue) {
       this.onChange(value);
       this.lastValue = value;
