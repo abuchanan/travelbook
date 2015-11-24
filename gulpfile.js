@@ -1,5 +1,6 @@
 var gulp          = require('gulp');
 var browserify    = require('browserify-incremental');
+var babelify      = require('babelify');
 var del           = require('del');
 var source        = require('vinyl-source-stream');
 var runSequence   = require('run-sequence');
@@ -13,6 +14,7 @@ var imageResize   = require('gulp-image-resize');
 var mapStream     = require('map-stream');
 var gm            = require('gulp-gm');
 var notifier      = require('node-notifier');
+var gutil         = require('gulp-util');
  
 
 var BUILD_DIR = __dirname + '/build';
@@ -41,16 +43,25 @@ gulp.task('yaml2json', function() {
   fs.writeFileSync(BUILD_DIR + '/data.json', JSON.stringify(data));
 });
 
+
+var buildNotification;
+
 gulp.task('browserify', function() {
   var browserifyConfig = {
     entries: ['./app/scripts/app.js'],
     cacheFile: './browserify-incremental-cache.json',
     debug: true,
+    transform: [babelify],
   };
 
   return browserify(browserifyConfig)
-    .transform('babelify')
     .bundle()
+    .on('error', function(err) {
+      gutil.log(err.message);
+      console.log(err.codeFrame);
+      BuildResult.errors.push(err);
+      this.end();
+    })
     .pipe(source('bundle.js'))
     .pipe(gulp.dest(BUILD_DIR))
 });
@@ -101,30 +112,56 @@ gulp.task('serve', function() {
   server();
 });
 
-gulp.task('notify-build-complete', function() {
-  notifier.notify({
-    'title': 'Travel Book',
-    'message': 'Build complete.'
-  });
-});
+
+var BuildResult = {
+  errors: [],
+  reset() {
+    this.errors = [];
+  },
+  notify() {
+
+    if (this.errors.length > 0) {
+      var notification = {
+        title: "Build Failed",
+        message: this.errors[0].message,
+      };
+    } else {
+      var notification = {
+        title: "Build Complete",
+        message: "Build Complete",
+      };
+    }
+
+    notifier.notify(notification);
+  }
+};
 
 gulp.task('watch', function() {
-  gulp.watch('app/**/*.js', function() {
-    return runSequence('browserify', 'notify-build-complete');
-  });
-  gulp.watch(toCopy, function() {
-    return runSequence('copy', 'notify-build-complete');
-  });
+  gulp.watch('app/**/*.js', TaskSet('browserify'));
+  gulp.watch(toCopy, TaskSet('copy'));
 });
 
+function TaskSet() {
+  var tasks = Array.prototype.slice.call(arguments);
 
-gulp.task('build', function() {
+  function before() {
+    console.log('reset');
+    BuildResult.reset();
+  }
+  function after() {
+    BuildResult.notify();
+  }
+  return function() {
+    before();
+    return runSequence.apply(null, tasks.concat(after));
+  }
+}
 
-  return runSequence('clean:dev',
-              'copy',
-              'symlink-image-collection',
-              'symlink-thumbnails',
-              'list-image-collection',
-              'browserify',
-              'notify-build-complete');
-});
+gulp.task('build', TaskSet(
+  'clean:dev',
+  'copy',
+  'symlink-image-collection',
+  'symlink-thumbnails',
+  'list-image-collection',
+  'browserify'
+));
