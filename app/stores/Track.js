@@ -7,12 +7,12 @@ class Track {
   constructor() {
     this.keyframes = [];
 
-    this.channel = csp.chan();
     var xform = compose(
       map(time => this.getValueAtTime(time)),
       dedupe()
     );
-    csp.operations.pipeline(this.channel, xform, Time.channel);
+    this.channel = csp.chan(1, xform);
+    csp.operations.pipe(Time.channel, this.channel);
   }
 
   setKeyframe(time, value, transition) {

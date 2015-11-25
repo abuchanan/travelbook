@@ -23,7 +23,6 @@ class Flight {
     this.id = "flight";
     // TODO need a way to clear the line
 
-    this.channel = csp.chan();
     var xform = compose(
       // Convert progress to a number of coordinates
       map(progress => Math.floor(this.arc.numCoordinates * progress)),
@@ -34,7 +33,8 @@ class Flight {
       // Get the partial arc (up to current progress)
       map(i => this.arc.slice(i))
     );
-    csp.operations.pipeline(this.channel, xform, this.progress.channel);
+    this.channel = csp.chan(1, xform);
+    csp.operations.pipe(this.progress.channel, this.channel);
     csp.spawn(this._reader());
   }
 
@@ -97,7 +97,6 @@ class FlightArc {
         i = 0;
       }
     }
-    console.log('slice', i, arc);
 
     return arc;
   }
