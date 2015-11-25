@@ -1,5 +1,4 @@
 import csp from 'js-csp';
-import Class from './Class';
 
 class TimeStream {
 
