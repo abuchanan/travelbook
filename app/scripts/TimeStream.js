@@ -1,18 +1,18 @@
-import H from 'highland';
+import csp from 'js-csp';
 import Class from './Class';
 
-const TimeStream = Class({
+class TimeStream {
 
-  init() {
+  constructor() {
     this.playing = false;
     this.endTime = null;
-    this._stream = H();
-    this._stream.resume();
-  },
+    this.channel = csp.chan();
+    this._frameCallback = this._frameCallback.bind(this);
+  }
 
   setEndTime(endTime) {
     this.endTime = endTime;
-  },
+  }
 
   _frameCallback(timestamp) {
     // Playback was stopped, so just return without requesting another frame.
@@ -36,11 +36,12 @@ const TimeStream = Class({
       return;
     }
 
-    this._stream.write(dt);
+    console.log('put', dt);
+    csp.putAsync(this.channel, dt);
 
     this._previousTime = dt;
     requestAnimationFrame(this._frameCallback);
-  },
+  }
 
   play() {
     if (this.playing) {
@@ -51,19 +52,16 @@ const TimeStream = Class({
     this._previousTime = -1;
     this.playing = true;
     requestAnimationFrame(this._frameCallback);
-  },
+  }
 
   stop() {
     this.playing = false;
-  },
+  }
 
   setTime(time) {
-  },
+    csp.putAsync(this.channel, time);
+  }
 
-  stream() {
-    return this._stream.observe();
-  },
-
-});
+}
 
 export default TimeStream;

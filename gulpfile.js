@@ -1,6 +1,6 @@
 var gulp          = require('gulp');
 var browserify    = require('browserify-incremental');
-var babelify      = require('babelify');
+//var babelify      = require('babelify');
 var del           = require('del');
 var source        = require('vinyl-source-stream');
 var runSequence   = require('run-sequence');
@@ -18,6 +18,7 @@ var gutil         = require('gulp-util');
  
 
 var BUILD_DIR = __dirname + '/build';
+var firstWatch = true;
 
 
 gulp.task('clean:dev', function() {
@@ -51,10 +52,14 @@ gulp.task('browserify', function() {
     entries: ['./app/scripts/app.js'],
     cacheFile: './browserify-incremental-cache.json',
     debug: true,
-    transform: [babelify],
   };
 
+  var babelConfig = {
+    optional: ['es7.classProperties']
+  }
+
   return browserify(browserifyConfig)
+    .transform("babelify", babelConfig)
     .bundle()
     .on('error', function(err) {
       // Remove __dirname from the error message to make it more easily readable.
@@ -139,6 +144,10 @@ var BuildResult = {
 };
 
 gulp.task('watch', function() {
+  if (firstWatch) {
+    TaskSet('build', 'serve')();
+    firstWatch = false;
+  }
   gulp.watch('app/**/*.js', TaskSet('browserify'));
   gulp.watch(toCopy, TaskSet('copy'));
 });

@@ -3,7 +3,6 @@ import Reflux from 'reflux';
 import MapboxGL from 'mapbox-gl';
 import buildClassNames from 'classnames';
 import keyboard from 'keyboardJS';
-import arc from 'arc';
 
 import { LocationActions, MapActions, TimelineActions } from '../actions';
 import MapStore from '../stores/map';

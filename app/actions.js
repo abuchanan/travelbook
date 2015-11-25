@@ -1,5 +1,5 @@
 import Reflux from 'reflux';
-import { EventEmitter } from 'events';
+import TimeStream from './scripts/TimeStream';
 
 export const CalendarActions = Reflux.createActions([
   'fetchDays', 'scroll', 'setDayRect', 'setCalendarRect', 'setDayImage'
@@ -24,3 +24,5 @@ export const LocationActions = Reflux.createActions([
 export const TimelineActions = Reflux.createActions([
   'play', 'stop', 'setCenter'
 ]);
+
+export const Time = new TimeStream();
