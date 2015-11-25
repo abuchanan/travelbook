@@ -5,72 +5,146 @@ import MapboxGL from 'mapbox-gl';
 import extend from 'extend';
 import jQuery from "jquery";
 import IntervalTree from 'interval-tree';
+import arc from 'arc';
+import Class from '../scripts/Class';
+import TimeStream from '../scripts/TimeStream';
+import Immutable from 'immutable';
 
 import { LocationActions, MapActions, TimelineActions } from '../actions';
 
 
-class Track {
-  constructor() {
-    this.keyframes = [];
-    this.noValue = {};
-    this.lastValue = this.noValue;
-  }
+function dropRepeats(stream) {
+  var dropMe = {};
+  return stream
+    .scan1((memo, value) => {
+      if (memo === value) {
+        return dropMe;
+      } else {
+        return value;
+      }
+    })
+    .reject(value => value === dropMe);
+}
 
-  addKeyframe(time, value, transition) {
+
+const Time = new TimeStream();
+
+const Track = Class({
+  init() {
+    this.keyframes = [];
+  },
+
+  setKeyframe(time, value, transition) {
+    var toSet = {time, value, transition};
+
     for (var i = 0; i < this.keyframes.length; i++) {
       var keyframe = this.keyframes[i];
 
-      if (keyframe[0] == time) {
-        keyframes[1] = value;
-      } else if (time < keyframe[0]) {
-        this.keyframes.splice(i, 0, [time, value, transition]);
+      if (keyframe.time == time) {
+        keyframes[i] = toSet;
+        return;
+      } else if (time < keyframe.time) {
+        this.keyframes.splice(i, 0, toSet);
         return;
       }
     }
 
-    this.keyframes.push([time, value]);
-  }
+    this.keyframes.push(toSet);
+  },
 
-  update(time) {
+  getValueAtTime(time) {
     var i = 0;
-    while (time >= this.keyframes[i][0]) {
+    while (i < this.keyframes.length && time >= this.keyframes[i].time) {
       i++;
     }
 
     if (i > 0) {
       i -= 1;
     }
-    var value = this.keyframes[i][1];
+    var keyframe = this.keyframes[i];
 
     // If this isn't the last keyframe, look for a transition.
     // Clearly, we can't transition after the last keyframe because
     // there's no value to transition _to_.
-    if (i < this.keyframes.length - 1) {
-      var transition = this.keyframes[i][2];
-
-      if (transition) {
-        var nextValue = this.keyframes[i + 1][1];
-        value = transition(time, value, nextValue);
-      }
+    if (i < this.keyframes.length - 1 && keyframe.transition) {
+      var nextKeyframe = this.keyframes[i + 1];
+      var percentComplete = (time - keyframe.time) / (nextKeyframe.time - keyframe.time);
+      return keyframe.transition(percentComplete, keyframe.value, nextKeyframe.value);
+    } else {
+      return keyframe.value;
     }
+  },
 
-    if (value !== this.lastValue) {
-      this.onChange(value);
-      this.lastValue = value;
-    }
-  }
+  stream() {
+    return Time.stream().map(this.getValueAtTime).through(dropRepeats);
+  },
 
-  onChange(value) {
-  }
-}
+});
 
 
-class LocationTrack extends Track {
-  onChange(value) {
-    console.log(value);
-    MapActions.setCenter(value);
-  }
-}
+const Flight = Class({
+  init() {
+    var start = { x: -122, y: 48 };
+    var end = { x: -77, y: 39 };
+
+    var generator = new arc.GreatCircle(start, end, {'name': 'Seattle to DC'});
+    this.line = generator.Arc(100, {offset: 10}).json();
+    this.coordinates = this.line.geometry.coordinates;
+
+    this.progress = new Track();
+    this.progress.setKeyframe(0, 0, this.progressTransition);
+    this.progress.setKeyframe(10000, 1);
+
+    // TODO need a way to clear the line
+    this.progress.stream()
+      .map(this.progressToIndex)
+      .reject(i => i == 0)
+      .through(dropRepeats)
+      .map(this.makeLine)
+      .each(line => MapActions.setFeature('flight', line));
+  },
+
+  progressTransition(percentComplete, lastValue, nextValue) {
+    return (nextValue - lastValue) * percentComplete;
+  },
+
+  makeLine(i) {
+    this.line.geometry.coordinates = this.coordinates.slice(0, i);
+    return this.line;
+  },
+
+  progressToIndex(progress) {
+    return Math.floor(this.coordinates.length * progress);
+  },
+});
+
+
+const MapCenter = Class({
+  init() {
+    this.track = new Track();
+    this.fetchGeoData();
+    this.track.stream().each(MapActions.setCenter);
+  },
+
+  fetchGeoData() {
+    jQuery.ajax({
+      url: "/travels.geojson",
+      dataType: "json",
+      cache: false,
+      context: this,
+      success: function(data) {
+        var keyframeTime = 0;
+
+        data.features.forEach(feature => {
+          var value = feature.geometry.coordinates;
+          this.track.setKeyframe(keyframeTime, value);
+          keyframeTime += 1500;
+        });
+
+        Time.setEndTime(keyframeTime);
+    }});
+  },
+});
 
 
 
@@ -80,70 +154,28 @@ const TimelineStore = Reflux.createStore({
   tracks: [],
 
   init() {
-    this.fetchGeoData();
+    // TODO what's the appropriate place for these to be defined?
+    //MapCenter();
+    Flight();
   },
 
-  fetchGeoData() {
-    var locationTrack = new LocationTrack();
-    this.tracks.push(locationTrack);
-
-    jQuery.ajax({
-        url: "/travels.geojson",
-        dataType: "json",
-        cache: false,
-        context: this,
-        success: function(data) {
-          var t = 0;
-
-          data.features.forEach(feature => {
-            locationTrack.addKeyframe(t, feature.geometry.coordinates);
-            t += 1500;
-          });
-
-          this.endTime = t;
-          console.log('loaded');
-        }
-    });
-  },
-
-  onFrame(time, previousTime) {
-    this.tracks.forEach(track => track.update(time));
-
-    if (time >= this.endTime) {
-      this.stop();
-    }
+  onRegisterTrack(track) {
+    this.tracks.push(track);
+    var store = this;
+    return function() {
+      var i = store.indexOf(track);
+      store.tracks.splice(i, 1);
+    };
   },
 
   onPlay() {
     MapActions.disableInteraction();
-    var startTime = null;
-    var previousTime = -1;
-    this.playing = true;
-    var store = this;
-
-    var callback = time => {
-      if (!store.playing) {
-        return;
-      }
-
-      if (!startTime) {
-        startTime = time;
-        requestAnimationFrame(callback);
-        return;
-      }
-
-      var dt = time - startTime;
-      store.onFrame(dt, previousTime);
-      previousTime = dt;
-      requestAnimationFrame(callback);
-    };
-
-    requestAnimationFrame(callback);
+    Time.play();
   },
 
   onStop() {
     MapActions.enableInteraction();
-    this.playing = false;
+    Time.stop();
   },
 });
 

@@ -12,7 +12,7 @@ export const DayActions = Reflux.createActions([
 
 export const MapActions = Reflux.createActions([
   'setCenter', 'fitBounds', 'clicked', 'disableInteraction',
-  'enableInteraction',
+  'enableInteraction', 'registerMapConfig', 'setFeature',
 ]);
 
 export const LocationActions = Reflux.createActions([

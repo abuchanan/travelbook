@@ -3,6 +3,7 @@ import Reflux from 'reflux';
 import MapboxGL from 'mapbox-gl';
 import buildClassNames from 'classnames';
 import keyboard from 'keyboardJS';
+import arc from 'arc';
 
 import { LocationActions, MapActions, TimelineActions } from '../actions';
 import MapStore from '../stores/map';
@@ -130,9 +131,6 @@ const LocationControl = React.createClass({
 const MapComponent = React.createClass({
 
   componentDidMount() {
-    keyboard.setContext('map');
-    keyboard.bind('s', this.openLocationSearch);
-
     var map = this.map = new MapboxGL.Map({
         container: this._container,
         style: 'mapbox://styles/buchanae/cih74usbl000y97mawr5vy126',
@@ -147,16 +145,34 @@ const MapComponent = React.createClass({
       },
     });
 
+    var features = new Map();
+
+    var testLayer = {
+      "id": "testDataLayer",
+      "source": "testData",
+      "type": "line",
+      "paint": {
+        "circle-color": "#ffffff",
+        "line-color": "#ffffff",
+      }
+    };
+
     map.on('load', function() {
-      console.log('load source', testData);
       map.addSource('testData', source);
-      map.addLayer({
-        "id": "testDataLayer",
-        "source": "testData",
-        "type": "circle",
-        "paint": {
-          "circle-color": "#ffffff"
-        }
+      map.addLayer(testLayer);
+    });
+
+    setTimeout(function() {
+      console.log('change color');
+      map.setPaintProperty("testDataLayer", "line-color", "#FF0000");
+    }, 5000);
+
+    MapActions.setFeature.listen((id, feature) => {
+      features.set(id, feature);
+
+      source.setData({
+        type: "FeatureCollection",
+        features: Array.from(features.values()),
       });
     });
 
@@ -169,10 +185,6 @@ const MapComponent = React.createClass({
     MapActions.enableInteraction.listen(() => {
       map.interaction.enable();
     });
-  },
-
-  openLocationSearch(e) {
-    e.preventDefault();
   },
 
   bindActionsToMap(...actionNames) {
@@ -196,27 +208,5 @@ const MapComponent = React.createClass({
     </div>);
   }
 });
-
-var testData = {
-  "type": "FeatureCollection",
-  "features": [
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Van Dorn Street",
-        "marker-color": "#0000ff",
-        "marker-symbol": "rail-metro",
-        "line": "blue"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -77.12911152370515,
-          38.79930767201779
-        ]
-      }
-    },
-  ]
-};
 
 export default MapComponent;
