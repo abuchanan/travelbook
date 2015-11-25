@@ -57,6 +57,8 @@ gulp.task('browserify', function() {
   return browserify(browserifyConfig)
     .bundle()
     .on('error', function(err) {
+      // Remove __dirname from the error message to make it more easily readable.
+      err.message = err.message.split(__dirname).join('');
       gutil.log(err.message);
       console.log(err.codeFrame);
       BuildResult.errors.push(err);
@@ -145,7 +147,6 @@ function TaskSet() {
   var tasks = Array.prototype.slice.call(arguments);
 
   function before() {
-    console.log('reset');
     BuildResult.reset();
   }
   function after() {
