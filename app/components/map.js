@@ -1,207 +1,143 @@
+import Q from 'q';
 import React from 'react';
-import Reflux from 'reflux';
 import MapboxGL from 'mapbox-gl';
 import buildClassNames from 'classnames';
-import keyboard from 'keyboardJS';
-
-import { LocationActions, MapActions, TimelineActions } from '../actions';
-import MapStore from '../stores/map';
-import LocationStore from '../stores/location';
-import TimelineStore from '../stores/timeline';
+//import keyboard from 'keyboardJS';
 
 
 MapboxGL.accessToken = 'pk.eyJ1IjoiYnVjaGFuYWUiLCJhIjoiY2loNzR0Y3U5MGd2OXZka3QyMHJ5bXo0ZCJ9.HdT8S-gTjPRkTb4v8Z23KQ';
 
-const PlaybackControl = React.createClass({
-  render() {
-    return (<div className="travel-map-playback-controls">
-      <button onClick={TimelineActions.play}>Play</button>
-      <button onClick={TimelineActions.stop}>Stop</button>
-    </div>);
-  }
-});
 
-const Result = React.createClass({
+const FlightControl = React.createClass({
 
-  handleClick(event) {
-    console.log('click', this.props.result);
-    LocationActions.selectLocation(this.props.result);
+  contextTypes: {
+    act: React.PropTypes.func,
   },
 
-  select() {
-    LocationActions.setHighlight(this.props.idx);
+  addFlight() {
+    var start = { x: -122, y: 48 };
+    var end = { x: 174.900, y: -36.536 };
+    this.context.act('add flight', start, end);
   },
 
   render() {
-    var result = this.props.result;
-    var classNames = buildClassNames("autocomplete-result", {
-      "highlighted": this.props.highlighted,
-    });
-
-    return (<div
-      className={classNames}
-      onMouseOver={this.select}
-      onMouseDown={this.handleClick}>
-      {result.place_name}
-    </div>);
+    return <button onClick={this.addFlight}>Add Flight</button>;
   }
 });
 
 
-const LocationControl = React.createClass({
-
-  mixins: [Reflux.connect(LocationStore)],
-
-  componentDidMount() {
-    keyboard.withContext('location search', this.bindKeys);
+  /*
+  "version": 8,
+  name: "test style",
+  sources: {
+    "mapbox-satellite": {
+      type: "vector",
+      style: 'mapbox://styles/buchanae/cih74usbl000y97mawr5vy126',
+    },
   },
+  */
 
-  bindKeys() {
-    keyboard.bind('up', this.onUpKey);
-    keyboard.bind('down', this.onDownKey);
-    keyboard.bind('enter', this.onEnterKey);
-  },
-
-  onEnterKey(e) {
-    e.preventDefault();
-    LocationActions.selectHighlighted();
-  },
-
-  onUpKey(e) {
-    e.preventDefault();
-    LocationActions.highlightPrevious();
-  },
-
-  onDownKey(e) {
-    e.preventDefault();
-    LocationActions.highlightNext();
-  },
-
-  handleChange(event) {
-    LocationActions.geocodeForward(event.target.value);
-  },
-
-  onFocus(event) {
-    keyboard.setContext('location search');
-    LocationActions.geocodeForward(event.target.value);
-  },
-
-  onBlur() {
-    LocationActions.clearResults();
-  },
-
-  render() {
-    var results = [];
-
-    if (this.state.results) {
-      results = this.state.results.map((result, idx) => {
-        return (<li role="option" key={result.id}>
-        <Result
-          idx={idx}
-          highlighted={idx == this.state.highlighted}
-          result={result}
-        /></li>);
-      });
+const style_def = {
+  "sprite": "/images/outtest",
+  "glyphs": "mapbox://fonts/mapbox/{fontstack}/{range}.pbf",
+  "version": 8,
+  "name": "Satellite Test Custom Style",
+  "sources": {
+    "mapbox": {
+      "type": "raster",
+      "url": "mapbox://mapbox.satellite",
+      "tileSize": 256
     }
-
-    return (<div className="travel-map-controls">
-      <input
-        autoFocus={false}
-        autoComplete={false}
-        placeholder="Search"
-        onChange={this.handleChange}
-        onFocus={this.onFocus}
-        onBlur={this.onBlur}
-        role="combobox"
-        aria-autocomplete="list"
-        aria-owns="location-search-results"
-        aria-expanded={results.length > 0}
-      />
-      <div id='location-search-results' role="listbox">
-        <ul>
-        {results}
-        </ul>
-      </div>
-    </div>);
-  }
-});
+  },
+  "layers": [
+    {
+      "id": "background",
+      "type": "background",
+      "paint": {
+        "background-color": "rgb(4,7,14)"
+      }
+    },
+    {
+      "id": "satellite",
+      "type": "raster",
+      "source": "mapbox",
+      "source-layer": "mapbox_satellite_full"
+    }
+  ]
+};
 
 
 const MapComponent = React.createClass({
 
+  contextTypes: {
+    act: React.PropTypes.func,
+  },
+
+  componentWillMount() {
+    this._load_map_deferred = Q.defer();
+    console.log("init");
+    this.sources = new Map();
+  },
+
+  load_map() {
+    return this._load_map_deferred.promise;
+  },
+
   componentDidMount() {
-    var map = this.map = new MapboxGL.Map({
+    var map = new MapboxGL.Map({
         container: this._container,
-        style: 'mapbox://styles/buchanae/cih74usbl000y97mawr5vy126',
+        style: style_def,
     });
 
-    map.on('click', MapActions.clicked);
+    map.on('load', () => this._load_map_deferred.resolve(map));
 
-    var source = new MapboxGL.GeoJSONSource({
-      data: {
-        "type": "FeatureCollection",
-        "features": [],
-      },
-    });
-
-    var features = new Map();
-
-    var testLayer = {
-      "id": "testDataLayer",
-      "source": "testData",
-      "type": "line",
-      "paint": {
-        "circle-color": "#ffffff",
-        "line-color": "#ffffff",
-      }
-    };
-
-    map.on('load', function() {
-      map.addSource('testData', source);
-      map.addLayer(testLayer);
-    });
-
-    setTimeout(function() {
-      console.log('change color');
-      map.setPaintProperty("testDataLayer", "line-color", "#FF0000");
-    }, 5000);
-
-    MapActions.setFeature.listen((id, feature) => {
-      features.set(id, feature);
-
-      source.setData({
-        type: "FeatureCollection",
-        features: Array.from(features.values()),
-      });
-    });
-
-    this.bindActionsToMap('setCenter', 'fitBounds');
-
-    MapActions.disableInteraction.listen(() => {
-      map.interaction.disable();
-    });
-
-    MapActions.enableInteraction.listen(() => {
-      map.interaction.enable();
-    });
+    console.log("mount");
   },
 
-  bindActionsToMap(...actionNames) {
-    var map = this.map;
-    actionNames.forEach(actionName => {
-      MapActions[actionName].listen((...args) => {
-        map[actionName].apply(map, args);
+  addLayers(map, source_id) {
+      map.addLayer({
+        "id": source_id + "-lines",
+        "type": "line",
+        "source": source_id,
+        "layout": {
+            "text-font": ["Open Sans Semibold", "Arial Unicode MS Bold"],
+            "text-offset": [0, 0.6],
+            "text-anchor": "top",
+        },
+        "paint": {
+          "line-color": "#ffffff"
+        }
       });
-    });
-  },
-
-  shouldComponentUpdate() {
-    return false;
   },
 
   render() {
+
+    console.log("render");
+
+    this.load_map().then(map => {
+
+      for (var source of this.props.map.sources) {
+        var [source_id, features] = source;
+
+        console.log("source", source_id, features);
+
+        if (!this.sources.has(source_id)) {
+          var source = new MapboxGL.GeoJSONSource();
+          this.sources.set(source_id, source);
+          map.addSource(source_id, source);
+          this.addLayers(map, source_id);
+          console.log('add source', source_id, features);
+        }
+
+        this.sources.get(source_id).setData({
+           "type": "FeatureCollection",
+           "features": features,
+        });
+      }
+    });
+
     return (<div>
-      <div><LocationControl /><PlaybackControl /></div>
+      <div className="travel-map-controls"><FlightControl /></div>
       <div className="travel-map"
            ref={el => this._container = el}></div>
     </div>);

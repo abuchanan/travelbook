@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+message State {
+  FlightState flights = 1;
+  TrackState tracks = 2;
+  MapState map = 3;
+  PlaybackState playback = 4;
+}
+
+message FlightState {
+  int32 last_id = 1;
+  repeated Flight flights = 2;
+}
+
+message TrackState {
+}
+
+message MapState {
+}
+
+message PlaybackState {
+}

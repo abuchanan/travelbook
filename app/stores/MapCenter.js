@@ -7,11 +7,12 @@ class MapCenter {
   constructor() {
     this.track = new Track();
     this.fetchGeoData();
-    this.channel = csp.chan();
+
     var xform = compose(
       map(MapActions.setCenter)
     );
-    csp.operations.pipeline(this.track.channel, xform, this.channel);
+    this.channel = csp.chan(1, xform);
+    csp.operations.pipe(this.track.channel, this.channel);
   }
 
   fetchGeoData() {
@@ -33,3 +34,5 @@ class MapCenter {
     }});
   }
 }
+
+export MapCenter;

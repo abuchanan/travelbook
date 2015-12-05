@@ -5,8 +5,26 @@ class TimeStream {
   constructor() {
     this.playing = false;
     this.endTime = null;
-    this.channel = csp.chan();
+    this._source = csp.chan(csp.buffers.sliding(1));
+    var debug = csp.chan();
+    this._mult = csp.operations.mult(this._source);
+    this._mult.tap(debug);
+
+    csp.go(function*() {
+      while (true) {
+        var time = yield debug;
+        console.log("time", time);
+      }
+    });
     this._frameCallback = this._frameCallback.bind(this);
+  }
+
+  tap(dest) {
+    if (!dest) {
+      dest = csp.chan();
+    }
+    csp.operations.mult.tap(this._mult, dest);
+    return dest;
   }
 
   setEndTime(endTime) {
@@ -35,8 +53,7 @@ class TimeStream {
       return;
     }
 
-    console.log('put', dt);
-    csp.putAsync(this.channel, dt);
+    csp.putAsync(this._source, dt);
 
     this._previousTime = dt;
     requestAnimationFrame(this._frameCallback);
@@ -58,7 +75,7 @@ class TimeStream {
   }
 
   setTime(time) {
-    csp.putAsync(this.channel, time);
+    csp.putAsync(this._source, time);
   }
 
 }

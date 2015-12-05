@@ -28,7 +28,7 @@ gulp.task('clean:dev', function() {
 var toCopy = [
   'app/styles/**/*.css', 'app/index.html',
   'app/images/**', 'app/html/**', 'app/data.json',
-  'app/travels.geojson'
+  'app/travels.geojson', 'app/maki-sdf',
 ];
 
 
@@ -49,13 +49,14 @@ var buildNotification;
 
 gulp.task('browserify', function() {
   var browserifyConfig = {
-    entries: ['./app/scripts/app.js'],
+    entries: ['./app/app.js'],
     cacheFile: './browserify-incremental-cache.json',
     debug: true,
   };
 
   var babelConfig = {
-    optional: ['es7.classProperties']
+    optional: ['es7.classProperties'],
+    sourceMapRelative: __dirname,
   }
 
   return browserify(browserifyConfig)

@@ -1,59 +1,46 @@
 import csp from 'js-csp';
-import { map, compose, dedupe } from 'transducers.js';
-import { Time } from '../actions';
+
+var LatestBuffer = function(buf) {
+  this.buf = buf;
+};
+
+LatestBuffer.prototype.is_full = function() {
+  return false;
+};
+
+LatestBuffer.prototype.remove = function() {
+  return this.buf;
+};
+
+LatestBuffer.prototype.add = function(item) {
+  this.buf = item;
+};
+
+LatestBuffer.prototype.count = function() {
+  return 1;
+};
 
 class Track {
 
-  constructor() {
-    this.keyframes = [];
-
-    var xform = compose(
-      map(time => this.getValueAtTime(time)),
-      dedupe()
-    );
-    this.channel = csp.chan(1, xform);
-    csp.operations.pipe(Time.channel, this.channel);
+  constructor(sourceCh) {
+    this.channel = csp.chan(new LatestBuffer());
+    //this.channel = csp.spawn(this._bufferLatest(sourceCh));
   }
 
-  setKeyframe(time, value, transition) {
-    var toSet = {time, value, transition};
+  _bufferLatest(sourceCh) {
+    var latest = yield sourceCh;
 
-    for (var i = 0; i < this.keyframes.length; i++) {
-      var keyframe = this.keyframes[i];
-
-      if (keyframe.time == time) {
-        keyframes[i] = toSet;
-        return;
-      } else if (time < keyframe.time) {
-        this.keyframes.splice(i, 0, toSet);
-        return;
+    csp.go(function*() {
+      while (true) {
+        latest = yield sourceCh;
       }
-    }
+    });
 
-    this.keyframes.push(toSet);
-  }
-
-  getValueAtTime(time) {
-    var i = 0;
-    while (i < this.keyframes.length && time >= this.keyframes[i].time) {
-      i++;
-    }
-
-    if (i > 0) {
-      i -= 1;
-    }
-    var keyframe = this.keyframes[i];
-
-    // If this isn't the last keyframe, look for a transition.
-    // Clearly, we can't transition after the last keyframe because
-    // there's no value to transition _to_.
-    if (i < this.keyframes.length - 1 && keyframe.transition) {
-      var nextKeyframe = this.keyframes[i + 1];
-      var percentComplete = (time - keyframe.time) / (nextKeyframe.time - keyframe.time);
-      return keyframe.transition(percentComplete, keyframe.value, nextKeyframe.value);
-    } else {
-      return keyframe.value;
-    }
+    return csp.go(function*() {
+      while (true) {
+        yield latest;
+      }
+    });
   }
 }
 
