@@ -117,3 +117,8 @@ button, input {
 #location-search-results li {
   list-style-type: none;
 }
+
+.entity-list {
+  background-color: #333;
+  padding: 10px;
+}

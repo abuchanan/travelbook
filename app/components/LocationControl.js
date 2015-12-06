@@ -1,11 +1,11 @@
+import keyboard from 'keyboardJS';
 import React from 'react';
+import buildClassNames from 'classnames';
 
 const LocationControl = React.createClass({
 
-  mixins: [Reflux.connect(LocationStore)],
-
-  componentDidMount() {
-    keyboard.withContext('location search', this.bindKeys);
+  contextTypes: {
+    actions: React.PropTypes.object,
   },
 
   bindKeys() {
@@ -16,54 +16,64 @@ const LocationControl = React.createClass({
 
   onEnterKey(e) {
     e.preventDefault();
-    LocationActions.selectHighlighted();
+    // TODO LocationActions.selectHighlighted();
   },
 
   onUpKey(e) {
     e.preventDefault();
-    LocationActions.highlightPrevious();
+    // TODO LocationActions.highlightPrevious();
   },
 
   onDownKey(e) {
     e.preventDefault();
-    LocationActions.highlightNext();
+    // TODO LocationActions.highlightNext();
+  },
+
+  getInitialState() {
+    return {results: []};
+  },
+
+  componentDidMount() {
+    this.geocoder = this.context.actions.Geocoder(results => {
+      this.setState({results: results.features});
+    });
   },
 
   handleChange(event) {
-    LocationActions.geocodeForward(event.target.value);
+    this.geocoder.geocode_forward(event.target.value);
   },
 
   onFocus(event) {
-    keyboard.setContext('location search');
-    LocationActions.geocodeForward(event.target.value);
+    //keyboard.setContext('location search');
+    this.geocoder.geocode_forward(event.target.value);
   },
 
   onBlur() {
-    LocationActions.clearResults();
+    this.geocoder.cancel();
+    this.setState({results: []});
   },
 
   render() {
-    var results = [];
+    console.log("res", this.state.results);
+    var results = this.state.results.map((result, idx) => {
+      return (<li role="option" key={result.id}>
+      <Result
+        idx={idx}
+        highlighted={idx == this.state.highlighted}
+        result={result}
+      /></li>);
+    });
 
-    if (this.state.results) {
-      results = this.state.results.map((result, idx) => {
-        return (<li role="option" key={result.id}>
-        <Result
-          idx={idx}
-          highlighted={idx == this.state.highlighted}
-          result={result}
-        /></li>);
-      });
-    }
-
-    return (<div className="travel-map-controls">
+    return (<div>
       <input
         autoFocus={false}
         autoComplete={false}
         placeholder="Search"
+
         onChange={this.handleChange}
         onFocus={this.onFocus}
         onBlur={this.onBlur}
+
         role="combobox"
         aria-autocomplete="list"
         aria-owns="location-search-results"
@@ -82,11 +92,11 @@ const Result = React.createClass({
 
   handleClick(event) {
     console.log('click', this.props.result);
-    LocationActions.selectLocation(this.props.result);
+    // TODO LocationActions.selectLocation(this.props.result);
   },
 
   select() {
-    LocationActions.setHighlight(this.props.idx);
+    // TODO LocationActions.setHighlight(this.props.idx);
   },
 
   render() {
@@ -103,3 +113,5 @@ const Result = React.createClass({
     </div>);
   }
 });
+
+export default LocationControl;

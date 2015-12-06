@@ -8,22 +8,6 @@ import buildClassNames from 'classnames';
 MapboxGL.accessToken = 'pk.eyJ1IjoiYnVjaGFuYWUiLCJhIjoiY2loNzR0Y3U5MGd2OXZka3QyMHJ5bXo0ZCJ9.HdT8S-gTjPRkTb4v8Z23KQ';
 
 
-const FlightControl = React.createClass({
-
-  contextTypes: {
-    act: React.PropTypes.func,
-  },
-
-  addFlight() {
-    var start = { x: -122, y: 48 };
-    var end = { x: 174.900, y: -36.536 };
-    this.context.act('add flight', start, end);
-  },
-
-  render() {
-    return <button onClick={this.addFlight}>Add Flight</button>;
-  }
-});
 
 
   /*
@@ -137,7 +121,6 @@ const MapComponent = React.createClass({
     });
 
     return (<div>
-      <div className="travel-map-controls"><FlightControl /></div>
       <div className="travel-map"
            ref={el => this._container = el}></div>
     </div>);

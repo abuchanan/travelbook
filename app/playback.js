@@ -1,5 +1,5 @@
 
-export function update_playback_time(state, time) {
+export function update_time(state, time) {
 
   // This is the first frame, so we initialize the start time and return.
   // The stream will start generating time on the next frame.
@@ -23,16 +23,16 @@ export function update_playback_time(state, time) {
 
 // TODO by looking at this function, it's hard to know which part of the state tree
 //      it relates to.
-export function stop_playback(state) {
+export function stop(state) {
   state.playing = false;
   state.start_time = null;
   state.previous_time = null;
 }
 
-export function start_playback(state, act) {
+export function start(state, tick) {
 
     function callback(timestamp) {
-      act('playback_frame', timestamp);
+      tick(timestamp);
 
       if (state.playing) {
         requestAnimationFrame(callback);

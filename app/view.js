@@ -1,50 +1,59 @@
 import React from 'react';
 import { render } from 'react-dom';
-import polyfill from 'babel-polyfill';
 
 import Layout from './components/layout';
 import Home from './components/home';
 import Map from './components/map';
-//import Calendar from './components/calendar';
-//import DayDetails from './components/day-details';
-//import { DayActions } from '../actions';
-
-
-function setScroll() {
-    window.scrollTo(0, 0)
-}
-
-//var history = createBrowserHistory();
-
-function updateDay(data) {
-  console.log('dump', arguments);
-  var dayID = data.params.id;
-  //DayActions.setCurrentDay(dayID);
-}
+import EntityList from './components/EntityList';
+import FlightControl from './components/FlightControl';
+import Inspector from './components/Inspector';
+import Create from './components/Create';
+import { Toolbar, InspectorButton } from './components/Toolbar';
 
 
 const Shell = React.createClass({
   childContextTypes: {
-    act: React.PropTypes.func,
+    actions: React.PropTypes.object,
   },
 
   getChildContext() {
-    return {act: this.props.act};
+    return {actions: this.props.actions};
   },
 
   render() {
-    return this.props.children;
+    return <div>{this.props.children}</div>;
   },
 });
 
 
-export function update_view(state, act) {
+export function update_view(state, actions) {
+
+  var {
+    inspector,
+    flights,
+    map,
+    container
+  } = state;
 
   var structure = (
-    <Shell act={act}>
-      <Map map={state.map} />
+    <Shell actions={actions}>
+
+      <div className="travel-map-controls">
+
+        <Toolbar>
+          <InspectorButton inspector={inspector} panel="create">+</InspectorButton>
+        </Toolbar>
+
+        <Inspector state={inspector}>
+          <Create key="create" inspector={inspector} />
+          <FlightControl key="flight" flight={inspector.data} />
+          <EntityList key="entity-list" flights={flights} />
+        </Inspector>
+      </div>
+
+      <Map map={map} />
     </Shell>
   );
 
-  render(structure, state.container);
+  render(structure, container);
 }
