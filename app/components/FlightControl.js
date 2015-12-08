@@ -16,10 +16,10 @@ const FlightControl = React.createClass({
         />
       </div>
       <div>
-        <LocationControl />
+        <LocationControl onResultSelected={result => console.log("from", result)} />
       </div>
       <div>
-        <LocationControl />
+        <LocationControl onResultSelected={result => console.log("to", result)} />
       </div>
     </div>);
   }

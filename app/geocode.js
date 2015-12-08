@@ -45,11 +45,6 @@ const manage_queries = csp.go(function*(query_ch, output_ch, cancel_ch, do_reque
 });
 
 
-
-// TODO how do you handle closing/cleaning up with something like this?
-
-
-
 /*
   I like:
   - the power of alts
@@ -61,10 +56,17 @@ const manage_queries = csp.go(function*(query_ch, output_ch, cancel_ch, do_reque
   -- can clean up with babel
 
   - confusion about put vs putAsync
-  - mess of creating a pipeline of channels
-  - reimplementing cancel in every part of the pipeline
+  -- the main thing is that you need a "yield" in order to give the 
+     backing generator a chance to block. Not sure why put() doesn't work
+     without async.
+  -- can possibly clean up with babel
 
-  - js-csp seems to fuck up exception handling stack traces by inserting some handler
+  - mess of creating a pipeline of channels
+  -- might be a useful sugar for syntax, or maybe a pipeline() helper
+
+  - reimplementing cancel in every part of the pipeline
+  -- turns out this isn't so bad and it needs to be implemented differently
+     depending on the context anyway.
 */
 
 function do_request(client, query, response_ch) {

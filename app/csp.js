@@ -57,6 +57,7 @@ export function debounce(input_ch, output_ch, duration) {
 }
 
 
+// TODO how do you handle closing/cleaning up with something like this?
 class Broadcast {
   constructor(...inputs) {
     this.input = csp.chan();

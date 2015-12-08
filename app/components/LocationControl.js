@@ -1,4 +1,3 @@
-import keyboard from 'keyboardJS';
 import React from 'react';
 import buildClassNames from 'classnames';
 
@@ -8,29 +7,8 @@ const LocationControl = React.createClass({
     actions: React.PropTypes.object,
   },
 
-  bindKeys() {
-    keyboard.bind('up', this.onUpKey);
-    keyboard.bind('down', this.onDownKey);
-    keyboard.bind('enter', this.onEnterKey);
-  },
-
-  onEnterKey(e) {
-    e.preventDefault();
-    // TODO LocationActions.selectHighlighted();
-  },
-
-  onUpKey(e) {
-    e.preventDefault();
-    // TODO LocationActions.highlightPrevious();
-  },
-
-  onDownKey(e) {
-    e.preventDefault();
-    // TODO LocationActions.highlightNext();
-  },
-
   getInitialState() {
-    return {results: []};
+    return {results: [], highlighted: 0, value: ""};
   },
 
   componentDidMount() {
@@ -39,74 +17,75 @@ const LocationControl = React.createClass({
     });
   },
 
-  onFocus(event) {
-    //keyboard.setContext('location search');
-    this.geocoder.geocode_forward(event.target.value);
-  },
-
   onBlur() {
-    this.geocoder.cancel();
+    this.geocoder.clear();
+  },
+
+  highlight(idx) {
+    this.setState({highlighted: idx});
+  },
+
+  select_result(result) {
+    this.props.onResultSelected(result);
+    this.setState({value: result.place_name});
+  },
+
+  handle_change(e) {
+    this.setState({value: e.target.value});
+    this.geocoder.geocode_forward(e.target.value);
   },
 
   render() {
-    console.log("res", this.state.results);
+
+    // TODO "No results" message when query but no results
+    // TODO loading spinner
     var results = this.state.results.map((result, idx) => {
-      return (<li role="option" key={result.id}>
-      <Result
-        idx={idx}
-        highlighted={idx == this.state.highlighted}
-        result={result}
-      /></li>);
+      return (
+        <li role="option" key={result.id}>
+          <Result
+            idx={idx}
+            onMouseOver={e => this.highlight(idx)}
+            onMouseDown={e => this.select_result(result)}
+            highlighted={idx == this.state.highlighted}
+            result={result}
+          />
+        </li>
+      );
     });
 
-    return (<div>
-      <input
-        autoFocus={false}
-        autoComplete={false}
-        placeholder="Search"
+    return (
+      <div>
+        <input
+          autoFocus={false}
+          autoComplete={false}
+          placeholder="Search"
+          value={this.state.value}
 
-        onChange={e => this.geocoder.geocode_forward(e.target.value)}
-        onFocus={this.onFocus}
-        onBlur={this.onBlur}
+          onChange={this.handle_change}
+          onBlur={this.onBlur}
 
-        role="combobox"
-        aria-autocomplete="list"
-        aria-owns="location-search-results"
-        aria-expanded={results.length > 0}
-      />
-      <div id='location-search-results' role="listbox">
-        <ul>
-        {results}
-        </ul>
+          role="combobox"
+          aria-autocomplete="list"
+          aria-owns="location-search-results"
+          aria-expanded={results.length > 0}
+        />
+        <div id='location-search-results' role="listbox">
+          <ul>
+          {results}
+          </ul>
+        </div>
       </div>
-    </div>);
+    );
   }
 });
 
-const Result = React.createClass({
+const Result = props => {
+  var {result, highlighted, ...other} = props;
+  var classNames = buildClassNames("autocomplete-result", {highlighted});
 
-  handleClick(event) {
-    console.log('click', this.props.result);
-    // TODO LocationActions.selectLocation(this.props.result);
-  },
-
-  select() {
-    // TODO LocationActions.setHighlight(this.props.idx);
-  },
-
-  render() {
-    var result = this.props.result;
-    var classNames = buildClassNames("autocomplete-result", {
-      "highlighted": this.props.highlighted,
-    });
-
-    return (<div
-      className={classNames}
-      onMouseOver={this.select}
-      onMouseDown={this.handleClick}>
-      {result.place_name}
-    </div>);
-  }
-});
+  return (
+    <div className={classNames} {...other}>{result.place_name}</div>
+  );
+};
 
 export default LocationControl;
