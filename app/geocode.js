@@ -26,7 +26,6 @@ const manage_queries = csp.go(function*(query_ch, output_ch, cancel_ch, do_reque
       switch (channel) {
         case query_ch:
           let query = value;
-          console.log("got query", query);
           // TODO should close the existing response channel probably.
           //      but have to check if it's NEVER, which is annoying.
           response_ch = csp.channel();
@@ -39,7 +38,6 @@ const manage_queries = csp.go(function*(query_ch, output_ch, cancel_ch, do_reque
           break;
 
         case cancel_ch:
-          console.log("canceled");
           response_ch = csp.NEVER;
           break;
       }
@@ -70,11 +68,9 @@ const manage_queries = csp.go(function*(query_ch, output_ch, cancel_ch, do_reque
 */
 
 function do_request(client, query, response_ch) {
-  console.log("sending query", query);
-  client.geocodeForward(query, (err, res) => {
-    console.log("received client response");
+  client.geocodeForward(query, (err, results) => {
     // TODO handle error
-    csp.put.async(response_ch, res);
+    csp.put.async(response_ch, {query, results});
   });
 }
 
@@ -100,6 +96,23 @@ class Geocoder {
     let results_buffer = csp.buffers.sliding(1);
     let results_ch = csp.channel(results_buffer);
 
+    // Cache query results.
+    let cache = new Map();
+    let cache_miss_ch = csp.channel();
+
+    function* check_cache() {
+      while (!queries_ch.closed) {
+        let query = yield queries_ch;
+        if (cache.has(query)) {
+          yield csp.put(results_ch, {query, results: cache.get(query)});
+        } else {
+          yield csp.put(cache_miss_ch, query);
+        }
+      }
+    }
+    csp.go.run(check_cache);
+    // Updating the cache with results happens later in handle_results()
+
     /*
       A couple actions can cause the geocode request to be canceled:
       1. A call to Geocoder.clear().
@@ -114,7 +127,7 @@ class Geocoder {
       have arrive for DEBOUNCE_TIME before sending a request.
     */
     let debounced_ch = csp.channel();
-    csp.debounce(queries_ch, debounced_ch, DEBOUNCE_TIME);
+    csp.debounce(cache_miss_ch, debounced_ch, DEBOUNCE_TIME);
 
     // Don't bother sending requests for short queries. See MIN_QUERY_LENGTH.
     let [short_queries, long_queries] = split_short_queries(debounced_ch);
@@ -124,7 +137,7 @@ class Geocoder {
     manage_queries(long_queries, results_ch, cancel_broadcast.tap(), bound_do_request);
 
     // Handle cancels and results.
-    csp.go.run(function*() {
+    function* handle_results() {
       let cancel_ch = cancel_broadcast.tap();
 
       while (!cancel_ch.closed || !results_ch.closed) {
@@ -138,14 +151,17 @@ class Geocoder {
             break;
 
           case results_ch:
-            let results = value;
+            let {query, results} = value;
+            cache.set(query, results);
             results_callback(results);
         }
       }
-    });
+    }
+    csp.go.run(handle_results);
   }
 
   geocode_forward(query) {
+    query = query.toLowerCase();
     csp.put.async(this._queries_ch, query);
   }
 
