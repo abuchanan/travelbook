@@ -39,10 +39,6 @@ const LocationControl = React.createClass({
     });
   },
 
-  handleChange(event) {
-    this.geocoder.geocode_forward(event.target.value);
-  },
-
   onFocus(event) {
     //keyboard.setContext('location search');
     this.geocoder.geocode_forward(event.target.value);
@@ -50,7 +46,6 @@ const LocationControl = React.createClass({
 
   onBlur() {
     this.geocoder.cancel();
-    this.setState({results: []});
   },
 
   render() {
@@ -70,7 +65,7 @@ const LocationControl = React.createClass({
         autoComplete={false}
         placeholder="Search"
 
-        onChange={this.handleChange}
+        onChange={e => this.geocoder.geocode_forward(e.target.value)}
         onFocus={this.onFocus}
         onBlur={this.onBlur}
 
