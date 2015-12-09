@@ -18,7 +18,6 @@ var gutil         = require('gulp-util');
  
 
 var BUILD_DIR = __dirname + '/build';
-var firstWatch = true;
 
 
 gulp.task('clean:dev', function() {
@@ -122,6 +121,7 @@ gulp.task('serve', function() {
 
 
 var BuildResult = {
+  number: 0,
   errors: [],
   reset() {
     this.errors = [];
@@ -136,7 +136,7 @@ var BuildResult = {
     } else {
       var notification = {
         title: "Build Complete",
-        message: "Build Complete",
+        message: "Build Complete #" + BuildResult.number,
       };
     }
 
@@ -145,9 +145,8 @@ var BuildResult = {
 };
 
 gulp.task('watch', function() {
-  if (firstWatch) {
+  if (BuildResult.number  == 0) {
     TaskSet('build', 'serve')();
-    firstWatch = false;
   }
   gulp.watch('app/**/*.js', TaskSet('browserify'));
   gulp.watch(toCopy, TaskSet('copy'));
@@ -157,6 +156,7 @@ function TaskSet() {
   var tasks = Array.prototype.slice.call(arguments);
 
   function before() {
+    BuildResult.number += 1;
     BuildResult.reset();
   }
   function after() {

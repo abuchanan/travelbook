@@ -13,7 +13,6 @@ function update_time(state, global_time) {
   //      should the next frame really jump 10 seconds forward? Or should jump
   //      one frame forward. I guess this is a question of how strongly to tie
   //      animation to actual global time.
-  var previous_time = state.current_time;
   var current_time = global_time - state.start_time;
 
   if (state.end_time !== -1 && current_time >= state.end_time) {
@@ -21,7 +20,6 @@ function update_time(state, global_time) {
     return;
   }
 
-  state.previous_time = previous_time;
   state.current_time = current_time;
 }
 
@@ -31,15 +29,14 @@ function update_time(state, global_time) {
 export function stop(state) {
   state.playing = false;
   state.start_time = -1;
-  state.previous_time = -1;
+  state.current_time = 0;
 }
 
 export function start(state) {
 
   function callback(global_time) {
-    update_time(state, global_time);
-
     if (state.playing) {
+      update_time(state, global_time);
       requestAnimationFrame(callback);
     }
   }

@@ -4,6 +4,7 @@ import * as playback from './playback';
 import * as flights from './flights';
 import Geocoder from './geocode';
 import { update_view } from './view';
+import { update_map } from './map';
 
 
 /*
@@ -87,6 +88,7 @@ const schema = {
 
 function on_update() {
   flights.update_flights(state.playback.current_time, state.flights, state.map.sources);
+  update_map(state.map, state.playback.current_time);
   update_view(state, actions);
 }
 
@@ -109,6 +111,13 @@ var actions = {
   playback: {
     start: bind(playback.start, state.playback),
     stop: bind(playback.stop, state.playback),
+    toggle: () => {
+      if (state.playback.playing) {
+        playback.stop(state.playback);
+      } else {
+        playback.start(state.playback);
+      }
+    },
   },
 
   Geocoder(results_callback) {
@@ -124,6 +133,15 @@ var actions = {
 (function test_data() {
   state.map.center.longitude = 257;
 
+  let c = state.map.tracks.center.keyframes.add();
+  c.value.longitude = state.map.center.longitude;
+  c.value.latitude = state.map.center.latitude;
+
+  let b = state.map.tracks.center.keyframes.add();
+  b.time = 10000;
+  b.value.latitude = -36.596269;
+  b.value.longitude = 174.856537;
+
   let a = actions.flights.add();
   a.from.latitude = 45.619300;
   a.from.longitude = -122.685138;
@@ -132,12 +150,10 @@ var actions = {
 
   a.tracks.progress.keyframes.get(0).value = 0;
   let end = a.tracks.progress.keyframes.add();
-  end.time = 5000;
+  end.time = 10000;
   end.value = 1;
 
-  state.playback.end_time = 7000;
-
-  setTimeout(() => actions.playback.start(), 2000);
+  state.playback.end_time = 11000;
 })();
 
 

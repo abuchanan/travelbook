@@ -75,7 +75,7 @@ const MapComponent = React.createClass({
       component.setState({map});
     });
 
-    map.on('drag', () => {
+    map.on("move", (...args) => {
       var center = map.getCenter();
       props.map.center.latitude = center.lat;
       props.map.center.longitude = center.lng;
@@ -84,18 +84,29 @@ const MapComponent = React.createClass({
 
   addLayers(map, source_id) {
       map.addLayer({
+        "id": source_id + "-circles",
+        "type": "circle",
+        "source": source_id,
+        "layout": {
+          "visibility": "none",
+        },
+        "paint": {
+          "circle-color": "#ffffff"
+        }
+      });
+      map.addLayer({
         "id": source_id + "-lines",
         "type": "line",
         "source": source_id,
-        "layout": {
-            "text-font": ["Open Sans Semibold", "Arial Unicode MS Bold"],
-            "text-offset": [0, 0.6],
-            "text-anchor": "top",
-        },
         "paint": {
-          "line-color": "#ffffff"
+          "line-color": "#ffffff",
         }
       });
+  },
+
+  removeLayers(map, source_id) {
+    map.removeLayer(source_id + "-lines");
+    map.removeLayer(source_id + "-circles");
   },
 
   render() {
@@ -112,10 +123,15 @@ const MapComponent = React.createClass({
 
       map.setCenter([center.longitude, center.latitude]);
 
+      for (let key of this.sources.keys()) {
+        if (!sources.has(key)) {
+          map.removeSource(key);
+          this.removeLayers(map, key);
+        }
+      }
+
       for (var source of sources.entries()) {
         var [source_id, features] = source;
-
-        console.log("source", source_id, features);
 
         if (!this.sources.has(source_id)) {
           var source = new MapboxGL.GeoJSONSource();

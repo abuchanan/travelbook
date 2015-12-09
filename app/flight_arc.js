@@ -5,8 +5,8 @@ import arc from 'arc';
 class FlightArc {
 
   static defaultOptions = {
-    resolution: 150,
-    offset: 10,
+    resolution: 100,
+    //offset: 10,
   };
 
   constructor(start, end, options) {
@@ -36,7 +36,17 @@ class FlightArc {
     let i = Math.floor(this.length * percent);
     var arc = this.clone();
     var geos = arc._arc.geometries;
+    var min = 2;
     var max = this.length;
+
+    if (percent == 0) {
+      arc._arc.geometries = [];
+      return arc;
+    }
+
+    if (i < min) {
+      i = min;
+    }
 
     if (i > max) {
       i = max;
@@ -47,9 +57,13 @@ class FlightArc {
       if (i >= coords.length) {
         i -= coords.length;
       } else {
-        coords.splice(i);
-        geos[j].length = i;
-        geos.splice(j + 1);
+        if (i > 0) {
+          coords.splice(i);
+          geos[j].length = i;
+          geos.splice(j + 1);
+        } else {
+          geos.splice(j);
+        }
         break;
       }
     }

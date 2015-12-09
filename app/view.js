@@ -8,7 +8,7 @@ import EntityList from './components/EntityList';
 import FlightControl from './components/FlightControl';
 import Inspector from './components/Inspector';
 import Create from './components/Create';
-import { Toolbar, InspectorButton } from './components/Toolbar';
+import { Toolbar, InspectorButton, PlaybackButton } from './components/Toolbar';
 
 
 const Shell = React.createClass({
@@ -41,6 +41,7 @@ export function update_view(state, actions) {
       <div className="travel-map-controls">
 
         <Toolbar>
+          <PlaybackButton onClick={actions.playback.toggle} playing={state.playback.playing} />
           <InspectorButton inspector={inspector} panel="create">+</InspectorButton>
         </Toolbar>
 

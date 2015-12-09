@@ -8,6 +8,14 @@ export const InspectorButton = ({inspector, panel, children}) => {
   </div>);
 };
 
+export const PlaybackButton = ({playing, onClick}) => {
+  return (
+    <div>
+      <button onClick={onClick}>{ playing ? "Stop" : "Play" }</button>
+    </div>
+  );
+};
+
 export const Toolbar = ({children}) => {
   return <div id="toolbar">{children}</div>;
 };
