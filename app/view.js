@@ -28,11 +28,11 @@ const Shell = React.createClass({
 
 export function update_view(state, actions) {
 
-  var {
+  let container = document.getElementById('app-container');
+  let {
     inspector,
     flights,
     map,
-    container
   } = state;
 
   var structure = (

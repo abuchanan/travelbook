@@ -2,27 +2,33 @@ import React from 'react';
 
 import LocationControl from './LocationControl';
 
-const FlightControl = React.createClass({
+const FlightControl = props => {
+  let {flight} = props;
 
-  render() {
-    var flight = this.props.flight;
+  function select(loc, res) {
+    let coordinates = res.geometry.coordinates;
+    loc.latitude = coordinates[1];
+    loc.longitude = coordinates[0];
+  }
 
-    return (<div>
+  return (
+    <div>
       <h1>Flight</h1>
       <div>
-        <input placeholder="Name"
-               value={ flight.name }
-               onChange={ e => flight.name = e.target.value }
+        <input
+          placeholder="Name"
+          value={ flight.name }
+          onChange={ e => flight.name = e.target.value }
         />
       </div>
-      <div>
-        <LocationControl onResultSelected={result => console.log("from", result)} />
-      </div>
-      <div>
-        <LocationControl onResultSelected={result => console.log("to", result)} />
-      </div>
-    </div>);
-  }
-});
+      <LocationControl
+        onResultSelected={ result => select(flight.from, result) }
+      />
+      <LocationControl 
+        onResultSelected={ result => select(flight.to, result) }
+      />
+    </div>
+  );
+};
 
 export default FlightControl;

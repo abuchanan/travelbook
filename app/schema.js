@@ -85,6 +85,10 @@ class BaseList {
     this.__on_change();
   }
 
+  get length() {
+    return this.__storage.length;
+  }
+
   clear() {
     this.__storage = [];
     this.__on_change();
@@ -163,12 +167,15 @@ function FactoryWrapper(value_type_def) {
 
 function wrap_on_change(callback) {
   var timeout;
+  var disabled = false;
 
   function wrapper() {
-    if (!timeout) {
+    if (!timeout && !disabled) {
       timeout = setTimeout(() => {
         timeout = false;
+        disabled = true;
         callback();
+        disabled = false;
       }, 0);
     }
   }

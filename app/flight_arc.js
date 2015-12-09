@@ -32,7 +32,8 @@ class FlightArc {
     return copy;
   }
 
-  slice(i) {
+  slice(percent) {
+    let i = Math.floor(this.length * percent);
     var arc = this.clone();
     var geos = arc._arc.geometries;
     var max = this.length;
@@ -43,13 +44,13 @@ class FlightArc {
 
     for (var j = 0; j < geos.length; j++) {
       var coords = geos[j].coords;
-      if (i == 0) {
-        geos.splice(j, 1);
-      } else if (i >= coords.length) {
+      if (i >= coords.length) {
         i -= coords.length;
       } else {
         coords.splice(i);
-        i = 0;
+        geos[j].length = i;
+        geos.splice(j + 1);
+        break;
       }
     }
 

@@ -1,5 +1,5 @@
 
-function get_or_create_source(sources, source_id) {
+export function get_or_create_source(sources, source_id) {
 
   if (!sources.has(source_id)) {
     var features = [];
@@ -10,12 +10,12 @@ function get_or_create_source(sources, source_id) {
   }
 }
 
-function add_feature(sources, source_id, feature) {
+export function add_feature(sources, source_id, feature) {
 
   get_or_create_source(source_id).push(feature);
 }
 
-function set_features(sources, source_id, features) {
+export function set_features(sources, source_id, features) {
   // TODO ensure that features is the proper shape
   //      this is where Typescript would be useful.
   sources.set(source_id, features);

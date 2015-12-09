@@ -9,15 +9,29 @@ import { update_view } from './view';
 /*
   Set up state data structure
 */
-var Location = {
+const Location = {
   name: "",
   latitude: 0,
   longitude: 0,
 };
 
-var schema = {
+const Coordinates = {
+  latitude: 0,
+  longitude: 0,
+};
 
-  container: null,
+const Track = {
+  id: "",
+  name: "Untitled",
+  type: "",
+  keyframes: Schema.List(),
+  definition: null,
+};
+
+const Keyframe = value => ({ time: 0, value });
+const Keyframes = value => Schema.List(Keyframe(value));
+
+const schema = {
 
   flights: Schema.Map({
     id: "",
@@ -26,20 +40,29 @@ var schema = {
     to: Location,
     is_active: true,
     progress: 1,
-    track_ids: Schema.Map(),
+
+    tracks: {
+      active: {
+        name: "Active",
+        keyframes: Keyframes(true),
+      },
+      progress: {
+        name: "Flight Progress",
+        keyframes: Keyframes(1),
+      },
+    }
   }),
 
   map: {
     sources: Schema.Map(),
+    center: Coordinates,
+    tracks: {
+      center: {
+        name: "Map Center",
+        keyframes: Keyframes(Coordinates),
+      }
+    },
   },
-
-  tracks: Schema.Map({
-    id: "",
-    name: "Untitled",
-    type: "",
-    keyframes: Schema.List(),
-    definition: null,
-  }),
 
   others: Schema.List({
     other_value: "other",
@@ -52,6 +75,7 @@ var schema = {
     playing: false,
     start_time: -1,
     end_time: -1,
+    previous_time: -1,
     current_time: 0,
   },
 
@@ -62,6 +86,7 @@ var schema = {
 };
 
 function on_update() {
+  flights.update_flights(state.playback.current_time, state.flights, state.map.sources);
   update_view(state, actions);
 }
 
@@ -78,18 +103,12 @@ function bind(func, ...args) {
 
 var actions = {
   flights: {
-    add: bind(flights.add_flight, state.flights, state.tracks, state.map.sources),
+    add: bind(flights.add_flight, state.flights),
   },
 
   playback: {
-    start: bind(playback.start, state.playback, timestamp => actions.playback.tick(timestamp)),
+    start: bind(playback.start, state.playback),
     stop: bind(playback.stop, state.playback),
-
-    tick(time) {
-      playback.update_time(state.playback, time);
-      //flights.update_tracks(state.tracks, state.playback.current_time);
-      flights.update_flights(state.flights, state.map.sources);
-    },
   },
 
   Geocoder(results_callback) {
@@ -102,4 +121,24 @@ var actions = {
   init app
 */
 
-state.container = document.getElementById('app-container');
+(function test_data() {
+  state.map.center.longitude = 257;
+
+  let a = actions.flights.add();
+  a.from.latitude = 45.619300;
+  a.from.longitude = -122.685138;
+  a.to.latitude = -36.596269;
+  a.to.longitude = 174.856537;
+
+  a.tracks.progress.keyframes.get(0).value = 0;
+  let end = a.tracks.progress.keyframes.add();
+  end.time = 5000;
+  end.value = 1;
+
+  state.playback.end_time = 7000;
+
+  setTimeout(() => actions.playback.start(), 2000);
+})();
+
+
+update_view(state, actions);

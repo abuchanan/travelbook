@@ -1,13 +1,9 @@
-import Q from 'q';
 import React from 'react';
 import MapboxGL from 'mapbox-gl';
 import buildClassNames from 'classnames';
-//import keyboard from 'keyboardJS';
 
 
 MapboxGL.accessToken = 'pk.eyJ1IjoiYnVjaGFuYWUiLCJhIjoiY2loNzR0Y3U5MGd2OXZka3QyMHJ5bXo0ZCJ9.HdT8S-gTjPRkTb4v8Z23KQ';
-
-
 
 
   /*
@@ -58,13 +54,12 @@ const MapComponent = React.createClass({
   },
 
   componentWillMount() {
-    this._load_map_deferred = Q.defer();
     console.log("init");
     this.sources = new Map();
   },
 
-  load_map() {
-    return this._load_map_deferred.promise;
+  getInitialState() {
+    return {map: null};
   },
 
   componentDidMount() {
@@ -73,9 +68,18 @@ const MapComponent = React.createClass({
         style: style_def,
     });
 
-    map.on('load', () => this._load_map_deferred.resolve(map));
+    let component = this;
+    let props = this.props;
 
-    console.log("mount");
+    map.on('load', () => {
+      component.setState({map});
+    });
+
+    map.on('drag', () => {
+      var center = map.getCenter();
+      props.map.center.latitude = center.lat;
+      props.map.center.longitude = center.lng;
+    });
   },
 
   addLayers(map, source_id) {
@@ -96,11 +100,19 @@ const MapComponent = React.createClass({
 
   render() {
 
-    console.log("render");
+    if (this.state.map !== null) {
+      console.log("render");
+      let map = this.state.map;
+      let {
+        map: {
+          center,
+          sources,
+        },
+      } = this.props;
 
-    this.load_map().then(map => {
+      map.setCenter([center.longitude, center.latitude]);
 
-      for (var source of this.props.map.sources) {
+      for (var source of sources.entries()) {
         var [source_id, features] = source;
 
         console.log("source", source_id, features);
@@ -110,7 +122,6 @@ const MapComponent = React.createClass({
           this.sources.set(source_id, source);
           map.addSource(source_id, source);
           this.addLayers(map, source_id);
-          console.log('add source', source_id, features);
         }
 
         this.sources.get(source_id).setData({
@@ -118,12 +129,15 @@ const MapComponent = React.createClass({
            "features": features,
         });
       }
-    });
+    }
 
-    return (<div>
-      <div className="travel-map"
-           ref={el => this._container = el}></div>
-    </div>);
+    return (
+      <div 
+        className="travel-map"
+        ref={el => this._container = el}
+      >
+      </div>
+    );
   }
 });
 

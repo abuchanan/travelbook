@@ -1,9 +1,8 @@
 import uuid from 'node-uuid';
 
 import FlightArc from './flight_arc';
-import { add_track, set_keyframe, get_value_at_time } from './tracks.js';
-import transitions from './scripts/transitions';
-
+import * as Keyframes from './keyframes';
+import * as transitions from './transitions';
 
 
 function seconds(t) {
@@ -15,53 +14,50 @@ function generate_id() {
 }
 
 
-export function add_flight(flights, tracks, map_sources) {
+// TODO maybe find a way to integrate this with the schema
+export function add_flight(flights) {
 
   var id = generate_id();
   var flight = flights.get(id);
-
   flight.id = id;
 
-  /*
-  var active_track = add_track(tracks, {
-    name: 'Active',
-    type: 'boolean',
-    update(is_active) { flight.is_active = is_active; },
-  });
-
-  var progress_track = add_track(tracks, {
-    name: 'Flight Progress',
-    type: 'float',
-    min: 0,
-    max: 1,
-    // TODO how to store this in the schema
-    update(progress) { flight.progress = progress; },
-  });
-
-  flight.track_ids.set('active', active_track.id);
-  flight.track_ids.set('progress', progress_track.id);
-
-  update_flights(flights, map_sources);
-  */
+  flight.tracks.active.keyframes.add();
+  flight.tracks.progress.keyframes.add();
 
   return flight;
 }
 
 
-export function update_flights(flights, map_sources) {
+function get_progress_track_value(track, time) {
+  let [start, end] = Keyframes.get_keyframes(track.keyframes, time);
 
-  for (var flight of flights.values()) {
-    if (flight.is_active && flight.from && flight.to) {
-      var reference_arc = new FlightArc(flight.from, flight.to);
-      var arc = slice_arc(reference_arc, flight.progress);
-      set_features(map_sources, flight.id, [arc.json()]);
-    }
+  // In this case we're past the last keyframe.
+  if (end === undefined) {
+    return start.value;
   }
+
+  let percent = (time - start.time) / (end.time - start.time);
+  return transitions.linear(percent, start.value, end.value);
 }
 
+export function update_flights(time, flights, map_sources) {
 
+  for (var flight of flights.values()) {
 
-function slice_arc(arc, progress) {
-  var slice_length = Math.floor(arc.length * progress);
-  return arc.slice(slice_length);
+    flight.is_active = Keyframes.get_value(flight.tracks.active.keyframes, time);
+    flight.progress = get_progress_track_value(flight.tracks.progress, time);
+
+    // TODO This should check if from/to are set to useful values and if not
+    //      remove the map feature data.
+    if (flight.is_active && flight.progress > 0) {
+      let from = {x: flight.from.longitude, y: flight.from.latitude};
+      let to = {x: flight.to.longitude, y: flight.to.latitude};
+      var reference_arc = new FlightArc(from, to);
+
+      let slice = reference_arc.slice(flight.progress);
+      map_sources.set(flight.id, [slice.json()]);
+    } else {
+      map_sources.delete(flight.id);
+    }
+  }
 }
