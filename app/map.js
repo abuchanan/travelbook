@@ -22,17 +22,6 @@ export function set_features(sources, source_id, features) {
   sources.set(source_id, features);
 }
 
-export function update_map(map, time) {
-  // let center = get_transition_track_value(map.tracks.center, time);
-  // TODO be able to merge objects on set
-  // map.center = get_value(keyframes, time);
-  // map.center.latitude = center.latitude;
-  // map.center.longitude = center.longitude;
-
-  // map.zoom = Keyframes.get_value(map.tracks.zoom.keyframes, time);
-}
-
-
 function get_transition_track_value(track, time) {
   let [start, end] = Keyframes.get_keyframes(track.keyframes, time);
   let transition = start.value.transition;

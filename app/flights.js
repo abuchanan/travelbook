@@ -1,6 +1,5 @@
 import FlightArc from './flight_arc';
-import * as Keyframes from './keyframes';
-import * as transitions from './transitions';
+import { linear as linear_transition } from './transitions';
 import { generate_id } from './utils';
 
 
@@ -18,43 +17,38 @@ export function add_flight(flights) {
 }
 
 
-function get_progress_track_value(track, time) {
-  let [start, end] = Keyframes.get_keyframes(track.keyframes, time);
-
-  // In this case we're past the last keyframe.
-  if (end === undefined) {
-    return start.value;
+function get_flight_progress(flight, track, track_state) {
+  let {start_value, end_value} = track;
+  let {percent_complete} = track_state;
+  let progress = linear_transition(percent_complete, start_value, end_value);
+  if (progress > 1) {
+    progress = 1;
+  } else if (progress < 0) {
+    progress = 0;
   }
-
-  let percent = (time - start.time) / (end.time - start.time);
-  return transitions.linear(percent, start.value, end.value);
+  return progress;
 }
 
-export function update_flights(time, flights, map) {
+export function flight_progress(state, track, track_state) {
+  let {flight_id, map} = track;
+  let flight = state.flights.get(flight_id);
+  flight.progress = get_flight_progress(flight, track, track_state);
 
-  for (var flight of flights.values()) {
+  // TODO This should check if from/to are set to useful values and if not
+  //      remove the map feature data.
+  if (flight.visible && flight.progress > 0) {
+    let from = {x: flight.from.longitude, y: flight.from.latitude};
+    let to = {x: flight.to.longitude, y: flight.to.latitude};
+    var reference_arc = new FlightArc(from, to);
 
-    // flight.visible = Keyframes.get_value(flight.tracks.visible.keyframes, time);
-    // flight.progress = get_progress_track_value(flight.tracks.progress, time);
+    let slice = reference_arc.slice(flight.progress);
 
-    // TODO This should check if from/to are set to useful values and if not
-    //      remove the map feature data.
-    if (flight.visible && flight.progress > 0) {
-      let from = {x: flight.from.longitude, y: flight.from.latitude};
-      let to = {x: flight.to.longitude, y: flight.to.latitude};
-      var reference_arc = new FlightArc(from, to);
+    let last = slice.last_point();
+    flight.last_point.longitude = last[0];
+    flight.last_point.latitude = last[1];
 
-      let slice = reference_arc.slice(flight.progress);
-
-      let last = slice.last_point();
-      flight.last_point.longitude = last[0];
-      flight.last_point.latitude = last[1];
-
-      console.log("flight", reference_arc.length, slice.length);
-
-      map.sources.set(flight.id, [slice.json()]);
-    } else {
-      map.sources.delete(flight.id);
-    }
+    state.map.sources.set(flight.id, [slice.json()]);
+  } else {
+    state.map.sources.delete(flight.id);
   }
 }

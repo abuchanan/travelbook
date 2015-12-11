@@ -28,10 +28,7 @@ function get_progress_track_value(track, time) {
 export function update_drives(time, drives, map) {
 
   for (var drive of drives.values()) {
-
-    // drive.visible = Keyframes.get_value(drive.tracks.visible.keyframes, time);
-    // drive.progress = get_progress_track_value(drive.tracks.progress, time);
-
+    
     // TODO This should check if route is set to useful values and if not
     //      remove the map feature data.
     if (drive.visible && drive.progress > 0) {

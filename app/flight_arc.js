@@ -37,6 +37,7 @@ class FlightArc {
     return copy;
   }
 
+  // TODO move this to a more general helper which slices a LineString
   slice(percent) {
     let i = Math.floor(this.length * percent);
     var arc = this.clone();
@@ -56,8 +57,6 @@ class FlightArc {
     if (i > max) {
       i = max;
     }
-
-    console.log("slice", this.length, percent, i, Math.floor(this.length * percent));
 
     for (var j = 0; j < geos.length; j++) {
       var coords = geos[j].coords;

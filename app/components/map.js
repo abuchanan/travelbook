@@ -59,33 +59,34 @@ const MapComponent = React.createClass({
   },
 
   getInitialState() {
-    return {map: null};
+    return {mapbox: null};
   },
 
   componentDidMount() {
-    var map = new MapboxGL.Map({
+    let map = this.props.map;
+
+    var mapbox = new MapboxGL.Map({
         container: this._container,
         style: style_def,
+        center: [map.center.longitude, map.center.latitude],
+        zoom: map.zoom,
     });
 
     let component = this;
-    let props = this.props;
 
-    map.on('load', () => {
-      component.setState({map});
-    });
+    mapbox.on('load', () => component.setState({mapbox}));
 
-    map.on("move", (...args) => {
-      var center = map.getCenter();
-      props.map.center.latitude = center.lat;
-      props.map.center.longitude = center.lng;
+    mapbox.on("move", (...args) => {
+      var new_center = mapbox.getCenter();
+      map.center.latitude = new_center.lat;
+      map.center.longitude = new_center.lng;
 
-      props.map.zoom = map.getZoom();
+      map.zoom = mapbox.getZoom();
     });
   },
 
-  addLayers(map, source_id) {
-      map.addLayer({
+  addLayers(mapbox, source_id) {
+      mapbox.addLayer({
         "id": source_id + "-circles",
         "type": "circle",
         "source": source_id,
@@ -96,7 +97,7 @@ const MapComponent = React.createClass({
           "circle-color": "#3b52ec"
         }
       });
-      map.addLayer({
+      mapbox.addLayer({
         "id": source_id + "-lines",
         "type": "line",
         "source": source_id,
@@ -106,17 +107,18 @@ const MapComponent = React.createClass({
       });
   },
 
-  removeLayers(map, source_id) {
-    map.removeLayer(source_id + "-lines");
-    map.removeLayer(source_id + "-circles");
+  removeLayers(mapbox, source_id) {
+    mapbox.removeLayer(source_id + "-lines");
+    mapbox.removeLayer(source_id + "-circles");
   },
 
   render() {
 
-    if (this.state.map !== null) {
+    let mapbox = this.state.mapbox;
+
+    if (mapbox !== null) {
       console.log("render");
 
-      let map = this.state.map;
       let {
         map: {
           center,
@@ -127,12 +129,12 @@ const MapComponent = React.createClass({
       } = this.props;
 
       if (interactive) {
-        map.interaction.enable();
+        mapbox.interaction.enable();
       } else {
-        map.interaction.disable();
+        mapbox.interaction.disable();
       }
 
-      map.jumpTo({
+      mapbox.jumpTo({
         center: {
           lng: center.longitude,
           lat: center.latitude,
@@ -142,8 +144,8 @@ const MapComponent = React.createClass({
 
       for (let key of this.sources.keys()) {
         if (!sources.has(key)) {
-          map.removeSource(key);
-          this.removeLayers(map, key);
+          mapbox.removeSource(key);
+          this.removeLayers(mapbox, key);
           this.sources.delete(key);
         }
       }
@@ -154,8 +156,8 @@ const MapComponent = React.createClass({
         if (!this.sources.has(source_id)) {
           var source = new MapboxGL.GeoJSONSource();
           this.sources.set(source_id, source);
-          map.addSource(source_id, source);
-          this.addLayers(map, source_id);
+          mapbox.addSource(source_id, source);
+          this.addLayers(mapbox, source_id);
         }
 
         this.sources.get(source_id).setData({

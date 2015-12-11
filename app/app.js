@@ -2,107 +2,15 @@ import polyfill from 'babel-polyfill';
 import React from 'react';
 import { render } from 'react-dom';
 
-import Schema from './schema';
 import * as playback from './playback';
-import * as flights from './flights';
+import { add_flight, flight_progress } from './flights';
 import * as drives from './drives';
-import { update_map } from './map';
 import { App } from './components/App';
 import { linear as linear_transition } from './transitions';
 import { seconds } from './utils';
+import { schema } from './schema';
+import * as storage from './schema/storage';
 
-/*
-  Set up state data structure
-*/
-const Location = {
-  name: "",
-  latitude: 0,
-  longitude: 0,
-};
-
-const Coordinates = {
-  latitude: 0,
-  longitude: 0,
-};
-
-const Keyframe = value => ({ time: 0, value });
-const Keyframes = value => Schema.List(Keyframe(value));
-
-const schema = {
-
-  flights: Schema.Map({
-    id: "",
-    name: "Untitled",
-    from: Location,
-    to: Location,
-    visible: true,
-    progress: 1,
-    last_point: Coordinates,
-    tracks: {
-      visible: {
-        name: "Visible",
-        keyframes: Keyframes(true),
-      },
-      progress: {
-        name: "Flight Progress",
-        keyframes: Keyframes(1),
-      },
-    }
-  }),
-
-  tracks: Schema.List(),
-
-  drives: Schema.Map({
-    id: "",
-    name: "Untitled",
-    visible: true,
-    progress: 1,
-    route: {
-      coordinates: Schema.List(),
-    },
-    tracks: {
-      visible: {
-        name: "Visible",
-        keyframes: Keyframes(true),
-      },
-      progress: {
-        name: "Flight Progress",
-        keyframes: Keyframes(1),
-      },
-    }
-  }),
-
-  map: {
-    sources: Schema.Map(),
-    center: Coordinates,
-    zoom: 3,
-    tracks: {
-      zoom: {
-        name: "Map Zoom",
-        keyframes: Keyframes(0),
-      },
-      center: {
-        name: "Map Center",
-        keyframes: Keyframes({
-          latitude: 0,
-          longitude: 0,
-          transition: null,
-        }),
-      }
-    },
-  },
-
-  playback: {
-    playing: false,
-    start_time: -1,
-    end_time: -1,
-    previous_time: -1,
-    current_time: 0,
-  },
-
-};
-
-let container = document.getElementById('app-container');
 
 function update_view() {
   render(<App appState={state} />, container);
@@ -114,10 +22,23 @@ function update_tracks() {
     previous_time,
   } = state.playback;
 
-  for (var track of state.tracks.__storage) {
+  let track_types = {
+    follow_flight,
+    pan_west,
+    linear_interpolate,
+    flight_progress,
+  };
+
+  for (var track of state.tracks) {
+
+    let track_type = track_types[track.type];
+
+    if (!track_type) {
+      throw new Error(`Unrecognized track type ${track.type}`);
+    }
 
     if (track.start_time <= current_time && track.end_time >= previous_time) {
-      track.update(track, {
+      track_type(state, track, {
         current_time,
         percent_complete: (current_time - track.start_time) / (track.end_time - track.start_time),
       });
@@ -125,95 +46,208 @@ function update_tracks() {
   }
 }
 
-function on_update() {
-  if (state.playback.playing) {
-    flights.update_flights(state.playback.current_time, state.flights, state.map);
-    drives.update_drives(state.playback.current_time, state.drives, state.map);
-  //   update_map(state.map, state.playback.current_time);
-    update_tracks();
+
+const STORAGE_KEY = "travel-book-storage-v1";
+
+function save_state(state) {
+  let data = {};
+
+  for (let key in state) {
+    let val = state[key];
+
+    if (val instanceof storage.Record) {
+      data[key] = save_state(val);
+
+    } else if (val instanceof storage.ScalarList) {
+      data[key] = val.__storage;
+
+    } else if (val instanceof storage.RecordList) {
+      data[key] = val.__storage.map(save_state);
+
+    } else if (val instanceof storage.RecordMap) {
+      data[key] = Array.from(val.entries())
+        .map(entry => [entry[0], save_state(entry[1])]);
+
+    } else if (val instanceof storage.BaseMap) {
+      data[key] = Array.from(val.entries());
+
+    } else if (is_scalar(val)) {
+      data[key] = val;
+
+    } else {
+      throw new Error("Unhandled type");
+    }
   }
-  update_view();
+  return data;
 }
 
-var state = Schema.build(schema, on_update);
+function save() {
+  let data = save_state(state);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function on_update() {
+  if (state.playback.playing) {
+    drives.update_drives(state.playback.current_time, state.drives, state.map);
+    update_tracks();
+  }
+  save();
+  update_view();
+}
 
 function add_track(tracks, track) {
   tracks.append(track);
 }
 
+function is_scalar(val) {
+  let type = typeof val;
+  return type == "string" || type == "number" || type == "boolean";
+}
+
+function load_state(data, state) {
+  for (let key in data) {
+    let val = data[key];
+    let substate = state[key];
+
+    if (substate instanceof storage.Record) {
+      load_state(val, substate);
+
+    } else if (substate instanceof storage.ScalarList) {
+      substate.extend(val);
+
+    } else if (substate instanceof storage.RecordList) {
+      for (let subkey of val) {
+        load_state(val[subkey], substate.add());
+      }
+
+    } else if (substate instanceof storage.RecordMap) {
+      for (let entry of val) {
+        load_state(entry[1], substate.get(entry[0]));
+      }
+
+    } else if (substate instanceof storage.BaseMap) {
+      substate.merge(new Map(val));
+
+    } else if (is_scalar(val)) {
+      state[key] = val;
+
+    } else {
+      throw new Error("Unhandled type");
+    }
+  }
+}
+
+function load() {
+  let data = JSON.parse(localStorage.getItem(STORAGE_KEY));
+  load_state(data, state);
+}
+
+
+function get_target(state, key) {
+  for (var part of key.split('.')) {
+    state = state[part];
+  }
+  return state;
+}
+
+function set_target(state, key, value) {
+  let sp = key.split('.');
+  for (var i = 0; i < sp.length - 1; i++) {
+    state = state[sp[i]];
+  }
+  state[sp[i]] = value;
+}
+
+function follow_flight(state, track, track_state) {
+  let {
+    target,
+    flight_id,
+  } = track;
+
+  target = get_target(state, target);
+  let flight = state.flights.get(flight_id);
+
+  target.latitude = flight.last_point.latitude;
+  target.longitude = flight.last_point.longitude;
+}
+
+function pan_west(state, track, track_state) {
+  let {target, start_point, end_point} = track;
+  let {percent_complete} = track_state;
+
+  target = get_target(state, target);
+  target.latitude = linear_transition(percent_complete, start_point.latitude, end_point.latitude);
+  target.longitude = linear_transition(percent_complete, start_point.longitude, end_point.longitude);
+}
+
+function linear_interpolate(state, track, track_state) {
+  let {start_value, end_value, target} = track;
+  let {percent_complete} = track_state;
+  let val = linear_transition(percent_complete, start_value, end_value);
+  set_target(state, target, val);
+}
+
+
+window.dump_storage = function() {
+  console.log("storage", JSON.parse(localStorage.getItem(STORAGE_KEY)));
+};
+
+window.dump_state = function() {
+  console.log("state", state);
+}
+
+window.clear_storage = function() {
+  localStorage.removeItem(STORAGE_KEY);
+};
+
 /*
   init app
 */
+var state = schema.create(on_update);
 
-(function test_data() {
+load();
+let container = document.getElementById('app-container');
+
+
+window.generate_test_data = function() {
 
   state.playback.end_time = 11000;
 
-  let a = flights.add_flight(state.flights);
+  state.map.center.latitude = 45.619300;
+  state.map.center.longitude = -122.685138;
+  state.map.zoom = 5;
+
+  let a = add_flight(state.flights);
   a.from.latitude = 45.619300;
   a.from.longitude = -122.685138;
   a.to.latitude = -37.005880;
   a.to.longitude = 174.789457;
 
-  function follow_flight(track) {
-    let {
-      target,
-      flight,
-    } = track;
 
-    target.latitude = flight.last_point.latitude;
-    target.longitude = flight.last_point.longitude;
-  }
-
-  function pan_west(track, state) {
-    let {
-      target,
-      start_point,
-      end_point,
-    } = track;
-    target.latitude = linear_transition(state.percent_complete, start_point.latitude, end_point.latitude);
-    target.longitude = linear_transition(state.percent_complete, start_point.longitude, end_point.longitude);
-  }
-
-  function simple_flight_progress(track, state) {
-    let progress = linear_transition(state.percent_complete, track.start_value, track.end_value);
-    if (progress > 1) {
-      progress = 1;
-    } else if (progress < 0) {
-      progress = 0;
-    }
-    track.flight.progress = progress;
-  }
-
-  function linear_interpolate(set_property) {
-    return (track, state) => {
-      set_property(linear_transition(state.percent_complete, track.start_value, track.end_value));
-    };
-  }
+  add_track(state.tracks, {
+    start_time: seconds(10),
+    end_time: seconds(12),
+    start_value: 5,
+    end_value: 10,
+    target: 'map.zoom',
+    type: 'linear_interpolate',
+  });
 
   add_track(state.tracks, {
     start_time: seconds(0),
-    end_time: seconds(5),
-    start_value: 1,
-    end_value: 3,
-    update: linear_interpolate(val => state.map.zoom = val),
-  });
-
-  add_track(state.tracks, {
-    start_time: seconds(5),
     end_time: seconds(10),
     start_value: 0,
     end_value: 1,
-    flight: a,
-    update: simple_flight_progress,
+    flight_id: a.id,
+    type: 'flight_progress',
   });
 
   add_track(state.tracks, {
-    start_time: seconds(5),
+    start_time: seconds(0),
     end_time: seconds(10),
-    flight: a,
-    target: state.map.center,
-    update: follow_flight,
+    flight_id: a.id,
+    target: 'map.center',
+    type: 'follow_flight',
   });
 
   // add_track(state.tracks, {
@@ -232,7 +266,7 @@ function add_track(tracks, track) {
   // });
 
 
-})();
+};
 
 
 update_view();
