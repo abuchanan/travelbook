@@ -1,5 +1,6 @@
 import React from 'react';
 import buildClassNames from 'classnames';
+import Geocoder from '../geocode';
 
 const LocationControl = React.createClass({
 
@@ -12,7 +13,7 @@ const LocationControl = React.createClass({
   },
 
   componentDidMount() {
-    this.geocoder = this.context.actions.Geocoder(results => {
+    this.geocoder = new Geocoder(results => {
       this.setState({results: results.features});
     });
   },

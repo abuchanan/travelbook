@@ -1,20 +1,11 @@
 import React from 'react';
 
-const Inspector = React.createClass({
-  render() {
-
-    // Find the active child component matching the "active" prop
-    var active;
-    for (var child of this.props.children) {
-      if (this.props.state.active == child.key) {
-        active = child;
-      }
+export const Inspector = ({children, active}) => {
+  // Find the active child component matching the "active" prop
+  for (var child of children) {
+    if (active == child.key) {
+      return child;
     }
-
-    return (<div id="inspector">
-      {active}
-    </div>);
   }
-});
-
-export default Inspector;
+  return <div></div>;
+};

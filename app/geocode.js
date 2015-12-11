@@ -1,13 +1,9 @@
 import MapboxClient from 'mapbox';
 
+import { seconds } from './utils';
 import * as csp from './csp';
+import { Mapbox_access_key } from './config';
 
-const access = 'pk.eyJ1IjoiYnVjaGFuYWUiLCJhIjoiY2loNzR0Y3U5MGd2OXZka3QyMHJ5bXo0ZCJ9.HdT8S-gTjPRkTb4v8Z23KQ';
-
-
-function seconds(n) {
-  return n * 1000;
-}
 
 const clear_buffer_on_signal = csp.go(function*(buffer, signal_ch) {
     while (!signal_ch.closed) {
@@ -56,7 +52,7 @@ const manage_queries = csp.go(function*(query_ch, output_ch, cancel_ch, do_reque
   -- can clean up with babel
 
   - confusion about put vs putAsync
-  -- the main thing is that you need a "yield" in order to give the 
+  -- the main thing is that you need a "yield" in order to give the
      backing generator a chance to block. Not sure why put() doesn't work
      without async.
   -- can possibly clean up with babel
@@ -84,12 +80,11 @@ function split_short_queries(queries_ch) {
   return csp.split(query => query.length < MIN_QUERY_LENGTH, queries_ch);
 }
 
-
 class Geocoder {
 
   // TODO could convert this to export its queries/results channels
   constructor(results_callback) {
-    let client = new MapboxClient(access);
+    let client = new MapboxClient(Mapbox_access_key);
 
     // Query strings are received here via Geocoder.geocode_forward().
     let queries_ch = this._queries_ch = csp.channel();
@@ -134,7 +129,7 @@ class Geocoder {
     // Don't bother sending requests for short queries. See MIN_QUERY_LENGTH.
     let [short_queries, long_queries] = split_short_queries(debounced_ch);
     cancel_broadcast.add_input(short_queries);
-    
+
     let bound_do_request = do_request.bind(null, client);
     manage_queries(long_queries, results_ch, cancel_broadcast.tap(), bound_do_request);
 

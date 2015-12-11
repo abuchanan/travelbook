@@ -26,6 +26,11 @@ class FlightArc {
       .reduce((a, b) => a + b);
   }
 
+  last_point() {
+    let geo = this._arc.geometries[this._arc.geometries.length - 1];
+    return geo.coords[geo.coords.length - 1];
+  }
+
   clone() {
     var copy = new this.constructor(this.start, this.end, this.resolution);
     copy.properties = extend({}, this.properties);
@@ -51,6 +56,8 @@ class FlightArc {
     if (i > max) {
       i = max;
     }
+
+    console.log("slice", this.length, percent, i, Math.floor(this.length * percent));
 
     for (var j = 0; j < geos.length; j++) {
       var coords = geos[j].coords;

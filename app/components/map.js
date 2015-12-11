@@ -79,6 +79,8 @@ const MapComponent = React.createClass({
       var center = map.getCenter();
       props.map.center.latitude = center.lat;
       props.map.center.longitude = center.lng;
+
+      props.map.zoom = map.getZoom();
     });
   },
 
@@ -91,7 +93,7 @@ const MapComponent = React.createClass({
           "visibility": "none",
         },
         "paint": {
-          "circle-color": "#ffffff"
+          "circle-color": "#3b52ec"
         }
       });
       map.addLayer({
@@ -99,7 +101,7 @@ const MapComponent = React.createClass({
         "type": "line",
         "source": source_id,
         "paint": {
-          "line-color": "#ffffff",
+          "line-color": "#3b52ec",
         }
       });
   },
@@ -113,20 +115,36 @@ const MapComponent = React.createClass({
 
     if (this.state.map !== null) {
       console.log("render");
+
       let map = this.state.map;
       let {
         map: {
           center,
           sources,
+          zoom,
         },
+        interactive,
       } = this.props;
 
-      map.setCenter([center.longitude, center.latitude]);
+      if (interactive) {
+        map.interaction.enable();
+      } else {
+        map.interaction.disable();
+      }
+
+      map.jumpTo({
+        center: {
+          lng: center.longitude,
+          lat: center.latitude,
+        },
+        zoom,
+      });
 
       for (let key of this.sources.keys()) {
         if (!sources.has(key)) {
           map.removeSource(key);
           this.removeLayers(map, key);
+          this.sources.delete(key);
         }
       }
 
@@ -148,7 +166,7 @@ const MapComponent = React.createClass({
     }
 
     return (
-      <div 
+      <div
         className="travel-map"
         ref={el => this._container = el}
       >

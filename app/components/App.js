@@ -1,26 +1,25 @@
 import React from 'react';
 
-import { add_flight } from './flights';
-import { add_drive } from './drives';
+import { add_flight } from '../flights';
+import { add_drive } from '../drives';
+import { toggle as toggle_playback } from '../playback';
 
-import Layout from './components/layout';
-import Home from './components/home';
-import Map from './components/map';
-import EntityList from './components/EntityList';
-import FlightControl from './components/FlightControl';
-import DirectionsInspector from './components/DirectionsInspector';
-import Inspector from './components/Inspector';
-import Create from './components/Create';
-import { Toolbar, InspectorButton, PlaybackButton } from './components/Toolbar';
+import Map from './map';
+import FlightControl from './FlightControl';
+import { DirectionsInspector } from './DirectionsInspector';
+import { Inspector } from './Inspector';
+import { Toolbar, InspectorButton, PlaybackButton } from './Toolbar';
 
 
 export const App = React.createClass({
-  childContextTypes: {
-    actions: React.PropTypes.object,
-  },
 
-  getChildContext() {
-    return {actions: this.props.appActions};
+  getInitialState() {
+    return {
+      inspector: {
+        active: null,
+        data: null,
+      }
+    };
   },
 
   set_inspector(key, data) {
@@ -34,16 +33,14 @@ export const App = React.createClass({
 
   render() {
     let appState = this.props.appState;
-    let actions = this.props.appActions;
 
     let {
       flights,
       drives,
       map,
-      playback: {
-        playing
-      }
+      playback,
     } = appState;
+    let playing = playback.playing;
 
     let {
       inspector,
@@ -53,7 +50,7 @@ export const App = React.createClass({
       <div>
         <div className="travel-map-controls">
           <Toolbar>
-            <PlaybackButton onClick={actions.playback.toggle} playing={playing} />
+            <PlaybackButton onClick={() => toggle_playback(playback)} playing={playing} />
             <div><button onClick={() => this.set_inspector("create")}>Create</button></div>
           </Toolbar>
 
@@ -66,7 +63,6 @@ export const App = React.createClass({
 
             <FlightControl key="flight" flight={inspector.data} />
             <DirectionsInspector key="directions" drive={inspector.data} />
-            <EntityList key="entity-list" flights={flights} />
           </Inspector>
         </div>
 

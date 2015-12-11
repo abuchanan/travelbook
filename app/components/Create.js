@@ -8,9 +8,14 @@ const Create = ({inspector}, {actions: {flights}}) => {
     inspector.data = flight;
   }
 
+  function activate_directions() {
+    inspector.active = "directions";
+  }
+
   return (<div id="create-inspector">
     <h1>Create</h1>
     <div><button onClick={add_flight}>Flight</button></div>
+    <div><button onClick={activate_directions}>Directions</button></div>
   </div>);
 };
 
