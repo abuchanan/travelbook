@@ -16,34 +16,45 @@ function update_view() {
   render(<App appState={state} />, container);
 }
 
+function update_sources() {
+  let entities = [...state.flights.values(), ...state.drives.values()];
+
+  state.map.sources.clear();
+  for (let entity of entities) {
+    state.map.sources.set(entity.id, Array.from(entity.features));
+  }
+}
+
 function update_tracks() {
+
   let {
     current_time,
     previous_time,
   } = state.playback;
-
   let track_types = {
     follow_flight,
-    pan_west,
     linear_interpolate,
     flight_progress,
   };
+  let entities = [...state.flights.values(), ...state.drives.values(), state.map];
 
-  for (var track of state.tracks) {
+  for (let entity of entities) {
+    for (let track of entity.tracks) {
+      let track_type = track_types[track.type];
 
-    let track_type = track_types[track.type];
+      if (!track_type) {
+        throw new Error(`Unrecognized track type ${track.type}`);
+      }
 
-    if (!track_type) {
-      throw new Error(`Unrecognized track type ${track.type}`);
-    }
-
-    if (track.start_time <= current_time && track.end_time >= previous_time) {
-      track_type(state, track, {
-        current_time,
-        percent_complete: (current_time - track.start_time) / (track.end_time - track.start_time),
-      });
+      if (track.start_time <= current_time && track.end_time >= previous_time) {
+        track_type(state, entity, track, {
+          current_time,
+          percent_complete: (current_time - track.start_time) / (track.end_time - track.start_time),
+        });
+      }
     }
   }
+
 }
 
 
@@ -91,6 +102,7 @@ function on_update() {
     drives.update_drives(state.playback.current_time, state.drives, state.map);
     update_tracks();
   }
+  update_sources();
   save();
   update_view();
 }
@@ -104,6 +116,7 @@ function is_scalar(val) {
   return type == "string" || type == "number" || type == "boolean";
 }
 
+// TODO playback state should not be saved/loaded
 function load_state(data, state) {
   for (let key in data) {
     let val = data[key];
@@ -158,33 +171,28 @@ function set_target(state, key, value) {
   state[sp[i]] = value;
 }
 
-function follow_flight(state, track, track_state) {
-  let {
-    target,
-    flight_id,
-  } = track;
-
-  target = get_target(state, target);
-  let flight = state.flights.get(flight_id);
+function follow_flight(state, flight, track, track_state) {
+  let {target_id} = track;
+  let target = get_target(state, target_id);
 
   target.latitude = flight.last_point.latitude;
   target.longitude = flight.last_point.longitude;
 }
 
-function pan_west(state, track, track_state) {
-  let {target, start_point, end_point} = track;
-  let {percent_complete} = track_state;
+// function pan_west(state, track, track_state) {
+//   let {target, start_point, end_point} = track;
+//   let {percent_complete} = track_state;
+//
+//   target = get_target(state, target);
+//   target.latitude = linear_transition(percent_complete, start_point.latitude, end_point.latitude);
+//   target.longitude = linear_transition(percent_complete, start_point.longitude, end_point.longitude);
+// }
 
-  target = get_target(state, target);
-  target.latitude = linear_transition(percent_complete, start_point.latitude, end_point.latitude);
-  target.longitude = linear_transition(percent_complete, start_point.longitude, end_point.longitude);
-}
-
-function linear_interpolate(state, track, track_state) {
-  let {start_value, end_value, target} = track;
+function linear_interpolate(state, entity, track, track_state) {
+  let {start_value, end_value, target_id} = track;
   let {percent_complete} = track_state;
   let val = linear_transition(percent_complete, start_value, end_value);
-  set_target(state, target, val);
+  set_target(state, target_id, val);
 }
 
 
@@ -224,29 +232,29 @@ window.generate_test_data = function() {
   a.to.longitude = 174.789457;
 
 
-  add_track(state.tracks, {
+  add_track(state.map.tracks, {
     start_time: seconds(10),
     end_time: seconds(12),
     start_value: 5,
     end_value: 10,
-    target: 'map.zoom',
+    // TODO confusing whether this refers state or entity and how would you
+    //      switch. want a better serializeable reference system
+    target_id: 'map.zoom',
     type: 'linear_interpolate',
   });
 
-  add_track(state.tracks, {
+  add_track(a.tracks, {
     start_time: seconds(0),
     end_time: seconds(10),
     start_value: 0,
     end_value: 1,
-    flight_id: a.id,
     type: 'flight_progress',
   });
 
-  add_track(state.tracks, {
+  add_track(a.tracks, {
     start_time: seconds(0),
     end_time: seconds(10),
-    flight_id: a.id,
-    target: 'map.center',
+    target_id: 'map.center',
     type: 'follow_flight',
   });
 

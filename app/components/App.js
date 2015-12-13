@@ -9,6 +9,7 @@ import FlightControl from './FlightControl';
 import { DirectionsInspector } from './DirectionsInspector';
 import { Inspector } from './Inspector';
 import { Toolbar, InspectorButton, PlaybackButton } from './Toolbar';
+import { ListInspector } from './ListInspector';
 
 
 export const App = React.createClass({
@@ -51,6 +52,7 @@ export const App = React.createClass({
         <div className="travel-map-controls">
           <Toolbar>
             <PlaybackButton onClick={() => toggle_playback(playback)} playing={playing} />
+            <div><button onClick={() => this.set_inspector("list")}>List</button></div>
             <div><button onClick={() => this.set_inspector("create")}>Create</button></div>
           </Toolbar>
 
@@ -63,6 +65,7 @@ export const App = React.createClass({
 
             <FlightControl key="flight" flight={inspector.data} />
             <DirectionsInspector key="directions" drive={inspector.data} />
+            <ListInspector key="list" flights={flights} drives={drives} onSelect={this.set_inspector} />
           </Inspector>
         </div>
 

@@ -29,9 +29,9 @@ function get_flight_progress(flight, track, track_state) {
   return progress;
 }
 
-export function flight_progress(state, track, track_state) {
-  let {flight_id, map} = track;
-  let flight = state.flights.get(flight_id);
+export function flight_progress(state, flight, track, track_state) {
+
+  flight.features.clear();
   flight.progress = get_flight_progress(flight, track, track_state);
 
   // TODO This should check if from/to are set to useful values and if not
@@ -47,8 +47,6 @@ export function flight_progress(state, track, track_state) {
     flight.last_point.longitude = last[0];
     flight.last_point.latitude = last[1];
 
-    state.map.sources.set(flight.id, [slice.json()]);
-  } else {
-    state.map.sources.delete(flight.id);
+    flight.features.append(slice.json());
   }
 }

@@ -1,4 +1,5 @@
 var gulp          = require('gulp');
+var path          = require('path');
 var browserify    = require('browserify-incremental');
 //var babelify      = require('babelify');
 var del           = require('del');
@@ -15,7 +16,7 @@ var mapStream     = require('map-stream');
 var gm            = require('gulp-gm');
 var notifier      = require('node-notifier');
 var gutil         = require('gulp-util');
- 
+
 
 var BUILD_DIR = __dirname + '/build';
 
@@ -132,6 +133,7 @@ var BuildResult = {
       var notification = {
         title: "Build Failed",
         message: this.errors[0].message,
+        icon: path.join(__dirname, 'Error-128.png'),
       };
     } else {
       var notification = {

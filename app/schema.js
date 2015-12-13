@@ -28,19 +28,9 @@ export const schema = def.Record({
     visible: true,
     progress: 1,
     last_point: Coordinates,
-    tracks: {
-      visible: {
-        name: "Visible",
-        keyframes: Keyframes(true),
-      },
-      progress: {
-        name: "Flight Progress",
-        keyframes: Keyframes(1),
-      },
-    }
+    tracks: def.List(),
+    features: def.List(),
   }),
-
-  tracks: def.List(),
 
   drives: def.Map({
     id: "",
@@ -50,37 +40,15 @@ export const schema = def.Record({
     route: {
       coordinates: def.List(),
     },
-    tracks: {
-      visible: {
-        name: "Visible",
-        keyframes: Keyframes(true),
-      },
-      progress: {
-        name: "Flight Progress",
-        keyframes: Keyframes(1),
-      },
-    }
+    tracks: def.List(),
+    features: def.List(),
   }),
 
   map: {
     sources: def.Map(),
     center: Coordinates,
     zoom: 3,
-    tracks: {
-      zoom: {
-        name: "Map Zoom",
-        keyframes: Keyframes(0),
-      },
-
-      center: {
-        name: "Map Center",
-        keyframes: Keyframes({
-          latitude: 0,
-          longitude: 0,
-          transition: null,
-        }),
-      },
-    },
+    tracks: def.List(),
   },
 
   playback: {
