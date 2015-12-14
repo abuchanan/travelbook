@@ -53,6 +53,7 @@ export const schema = def.Record({
 
   playback: {
     playing: false,
+    stop: false,
     start_time: -1,
     end_time: -1,
     previous_time: -1,

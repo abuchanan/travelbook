@@ -5,7 +5,6 @@ import buildClassNames from 'classnames';
 
 MapboxGL.accessToken = 'pk.eyJ1IjoiYnVjaGFuYWUiLCJhIjoiY2loNzR0Y3U5MGd2OXZka3QyMHJ5bXo0ZCJ9.HdT8S-gTjPRkTb4v8Z23KQ';
 
-
   /*
   "version": 8,
   name: "test style",
@@ -54,34 +53,34 @@ const MapComponent = React.createClass({
   },
 
   componentWillMount() {
-    console.log("init");
     this.sources = new Map();
-  },
-
-  getInitialState() {
-    return {mapbox: null};
   },
 
   componentDidMount() {
     let map = this.props.map;
 
-    var mapbox = new MapboxGL.Map({
+    this.loaded = false;
+    this.mapbox = new MapboxGL.Map({
         container: this._container,
         style: style_def,
         center: [map.center.longitude, map.center.latitude],
         zoom: map.zoom,
     });
+    window.mapbox = this.mapbox;
 
-    let component = this;
-
-    mapbox.on('load', () => component.setState({mapbox}));
+    let self = this;
+    mapbox.on('load', () => {
+      self.loaded = true;
+      self.updateMap(self.props);
+    });
 
     mapbox.on("move", (...args) => {
-      var new_center = mapbox.getCenter();
-      map.center.latitude = new_center.lat;
-      map.center.longitude = new_center.lng;
+      var new_center = self.mapbox.getCenter();
+  //    map.center.latitude = new_center.lat;
+  //    map.center.longitude = new_center.lng;
 
-      map.zoom = mapbox.getZoom();
+      console.log("move");
+      //map.zoom = mapbox.getZoom();
     });
   },
 
@@ -112,61 +111,80 @@ const MapComponent = React.createClass({
     mapbox.removeLayer(source_id + "-circles");
   },
 
-  render() {
+  updateMap(props) {
+    console.log("update mapbox");
+    let mapbox = this.mapbox;
 
-    let mapbox = this.state.mapbox;
-
-    if (mapbox !== null) {
-      console.log("render");
-
-      let {
-        map: {
-          center,
-          sources,
-          zoom,
-        },
-        interactive,
-      } = this.props;
-
-      if (interactive) {
-        mapbox.interaction.enable();
-      } else {
-        mapbox.interaction.disable();
-      }
-
-      mapbox.jumpTo({
-        center: {
-          lng: center.longitude,
-          lat: center.latitude,
-        },
+    let {
+      map: {
+        center,
+        sources,
         zoom,
-      });
+      },
+      interactive,
+    } = props;
 
-      for (let key of this.sources.keys()) {
-        if (!sources.has(key)) {
-          mapbox.removeSource(key);
-          this.removeLayers(mapbox, key);
-          this.sources.delete(key);
-        }
-      }
+    if (interactive) {
+      mapbox.interaction.enable();
+    } else {
+      mapbox.interaction.disable();
+    }
 
-      for (var source of sources.entries()) {
-        var [source_id, features] = source;
+    console.log("jump to ", center.longitude, center.latitude);
+    // mapbox.jumpTo({
+    //   center: {
+    //     lng: center.longitude,
+    //     lat: center.latitude,
+    //   },
+    //   zoom,
+    // });
 
-        if (!this.sources.has(source_id)) {
-          var source = new MapboxGL.GeoJSONSource();
-          this.sources.set(source_id, source);
-          mapbox.addSource(source_id, source);
-          this.addLayers(mapbox, source_id);
-        }
+    // Mapbox tile rendering performance improves when you stick
+    // to positive longitudes (edge case).
+    let lng = center.longitude;
+    if (lng < 0) {
+      lng = 360 + (lng % -360);
+    }
 
-        this.sources.get(source_id).setData({
-           "type": "FeatureCollection",
-           "features": features,
-        });
+    mapbox.setCenter([lng, center.latitude]);
+
+    for (let key of this.sources.keys()) {
+      if (!sources.has(key)) {
+        mapbox.removeSource(key);
+        this.removeLayers(mapbox, key);
+        this.sources.delete(key);
       }
     }
 
+    for (var source of sources.entries()) {
+      var [source_id, features] = source;
+
+      if (!this.sources.has(source_id)) {
+        var source = new MapboxGL.GeoJSONSource();
+        this.sources.set(source_id, source);
+        mapbox.addSource(source_id, source);
+        this.addLayers(mapbox, source_id);
+      }
+
+      this.sources.get(source_id).setData({
+         "type": "FeatureCollection",
+         "features": features,
+      });
+    }
+  },
+
+  componentWillReceiveProps(props) {
+    if (this.loaded) {
+      this.updateMap(props);
+    }
+  },
+
+  shouldComponentUpdate() {
+    return false;
+  },
+
+  render() {
+    console.log("render");
     return (
       <div
         className="travel-map"

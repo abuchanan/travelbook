@@ -5,7 +5,7 @@ import arc from 'arc';
 class FlightArc {
 
   static defaultOptions = {
-    resolution: 100,
+    resolution: 200,
     //offset: 10,
   };
 
@@ -35,46 +35,6 @@ class FlightArc {
     var copy = new this.constructor(this.start, this.end, this.resolution);
     copy.properties = extend({}, this.properties);
     return copy;
-  }
-
-  // TODO move this to a more general helper which slices a LineString
-  slice(percent) {
-    let i = Math.floor(this.length * percent);
-    var arc = this.clone();
-    var geos = arc._arc.geometries;
-    var min = 2;
-    var max = this.length;
-
-    if (percent == 0) {
-      arc._arc.geometries = [];
-      return arc;
-    }
-
-    if (i < min) {
-      i = min;
-    }
-
-    if (i > max) {
-      i = max;
-    }
-
-    for (var j = 0; j < geos.length; j++) {
-      var coords = geos[j].coords;
-      if (i >= coords.length) {
-        i -= coords.length;
-      } else {
-        if (i > 0) {
-          coords.splice(i);
-          geos[j].length = i;
-          geos.splice(j + 1);
-        } else {
-          geos.splice(j);
-        }
-        break;
-      }
-    }
-
-    return arc;
   }
 
   json() {

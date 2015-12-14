@@ -1,6 +1,11 @@
 
 function update_time(state, global_time) {
 
+  if (state.stop) {
+    reset(state);
+    return;
+  }
+
   // This is the first frame, so we initialize the start time and return.
   // The stream will start generating time on the next frame.
   if (state.start_time == -1) {
@@ -33,11 +38,17 @@ function update_time(state, global_time) {
 
 // TODO by looking at this function, it's hard to know which part of the state tree
 //      it relates to.
-export function stop(state) {
+function reset(state) {
+  console.log("reset");
+  state.stop = false;
   state.playing = false;
   state.start_time = -1;
   state.previous_time = -1;
   state.current_time = 0;
+}
+
+export function stop(state) {
+  state.stop = true;
 }
 
 export function start(state) {

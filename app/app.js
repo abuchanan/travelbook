@@ -97,13 +97,15 @@ function save() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
 
+
 function on_update() {
   if (state.playback.playing) {
-    drives.update_drives(state.playback.current_time, state.drives, state.map);
+//    drives.update_drives(state.playback.current_time, state.drives, state.map);
     update_tracks();
   }
+
   update_sources();
-  save();
+  //save();
   update_view();
 }
 
@@ -217,13 +219,14 @@ load();
 let container = document.getElementById('app-container');
 
 
+window.state = state;
 window.generate_test_data = function() {
 
-  state.playback.end_time = 11000;
+  // state.playback.end_time = 11000;
 
-  state.map.center.latitude = 45.619300;
-  state.map.center.longitude = -122.685138;
-  state.map.zoom = 5;
+  // state.map.center.latitude = 45.619300;
+  // state.map.center.longitude = -122.685138;
+  state.map.zoom = 1;
 
   let a = add_flight(state.flights);
   a.from.latitude = 45.619300;
@@ -231,18 +234,18 @@ window.generate_test_data = function() {
   a.to.latitude = -37.005880;
   a.to.longitude = 174.789457;
 
-
-  add_track(state.map.tracks, {
-    start_time: seconds(10),
-    end_time: seconds(12),
-    start_value: 5,
-    end_value: 10,
-    // TODO confusing whether this refers state or entity and how would you
-    //      switch. want a better serializeable reference system
-    target_id: 'map.zoom',
-    type: 'linear_interpolate',
-  });
-
+  //
+  // add_track(state.map.tracks, {
+  //   start_time: seconds(10),
+  //   end_time: seconds(12),
+  //   start_value: 5,
+  //   end_value: 10,
+  //   // TODO confusing whether this refers state or entity and how would you
+  //   //      switch. want a better serializeable reference system
+  //   target_id: 'map.zoom',
+  //   type: 'linear_interpolate',
+  // });
+  //
   add_track(a.tracks, {
     start_time: seconds(0),
     end_time: seconds(10),
@@ -276,5 +279,5 @@ window.generate_test_data = function() {
 
 };
 
-
+generate_test_data();
 update_view();
