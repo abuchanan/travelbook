@@ -1,21 +1,20 @@
 
-export function set_keyframe(track, time, value, transition) {
-  var keyframes = track.keyframes;
+export function set_keyframe(keyframes, time, value, transition) {
   var toSet = {time, value, transition};
 
   for (var i = 0; i < keyframes.length; i++) {
-    var keyframe = keyframes[i];
+    var keyframe = keyframes.get(i);
 
     if (keyframe.time == time) {
-      keyframes[i] = toSet;
+      keyframes.set(i, toSet);
       return;
     } else if (time < keyframe.time) {
-      keyframes.splice(i, 0, toSet);
+      keyframes.insert(i, toSet);
       return;
     }
   }
 
-  keyframes.push(toSet);
+  keyframes.append(toSet);
 }
 
 export function get_keyframes(keyframes, time) {

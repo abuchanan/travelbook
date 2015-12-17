@@ -54,7 +54,7 @@ class Record {
 }
 
 
-class BaseMap {
+class Dict {
 
   constructor(on_change) {
     Object.defineProperties(this, {
@@ -121,32 +121,7 @@ class BaseMap {
 }
 
 
-class RecordMap extends BaseMap {
-
-  constructor(on_change, value_type_def) {
-    super(on_change);
-
-    Object.defineProperties(this, {
-      __value_type_def: {
-        value: value_type_def,
-        enumerable: false,
-      }
-    });
-  }
-
-  get(key) {
-    if (!this.__storage.has(key)) {
-      var val = this.__value_type_def.create(this.__on_change);
-      this.__storage.set(key, val);
-      return val;
-    } else {
-      return this.__storage.get(key);
-    }
-  }
-}
-
-
-class BaseList {
+class List {
 
   constructor(on_change) {
     Object.defineProperties(this, {
@@ -187,35 +162,18 @@ class BaseList {
     this.__storage.push(...vals);
     this.__on_change();
   }
-}
 
-class ScalarList extends BaseList {
+  slice(...args) {
+    return this.__storage.slice(...args);
+  }
+
+  insert(i, x) {
+    this.__storage.splice(i, 0, x);
+  }
 
   append(...vals) {
     this.__storage.push(...vals);
     this.__on_change();
-  }
-}
-
-
-class RecordList extends BaseList {
-
-  constructor(on_change, value_type_def) {
-    super(on_change);
-
-    Object.defineProperties(this, {
-      __value_type_def: {
-        value: value_type_def,
-        enumerable: false,
-      }
-    });
-  }
-
-  add() {
-    let val = this.__value_type_def.create(this.__on_change);
-    this.__storage.push(val);
-    this.__on_change();
-    return val;
   }
 }
 
@@ -250,4 +208,4 @@ function wrap_on_change(callback) {
   return wrapper;
 }
 
-export { SchemaDef, Record, RecordMap, RecordList, BaseMap, BaseList, ScalarList };
+export { SchemaDef, Record, List, Dict };

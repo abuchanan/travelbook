@@ -1,6 +1,25 @@
 import * as Keyframes from './keyframes';
 import * as transitions from './transitions';
 import { generate_id } from './utils';
+import { Record, List } from './schema/defs';
+
+
+const Drive = Record({
+  id: "",
+  name: "Untitled",
+  visible: true,
+  progress: 1,
+  route: {
+    coordinates: List(),
+  },
+  tracks: {
+    visible: List(),
+    progress: List(),
+    follow: List(),
+  },
+  features: List(),
+});
+
 
 export function add_drive(drives) {
   let id = generate_id();
@@ -28,7 +47,7 @@ function get_progress_track_value(track, time) {
 export function update_drives(time, drives, map) {
 
   for (var drive of drives.values()) {
-    
+
     // TODO This should check if route is set to useful values and if not
     //      remove the map feature data.
     if (drive.visible && drive.progress > 0) {

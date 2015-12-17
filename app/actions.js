@@ -1,28 +1,61 @@
-import Reflux from 'reflux';
-import TimeStream from './scripts/TimeStream';
 
-export const CalendarActions = Reflux.createActions([
-  'fetchDays', 'scroll', 'setDayRect', 'setCalendarRect', 'setDayImage'
-]);
+export function add_flight() {
+  return {type: "add_flight"};
+}
 
-export const DayActions = Reflux.createActions([
-  'loadDate', 'setCurrentDay',
-  'gotoNext', 'gotoPrevious', 'setFilter'
-]);
+export function add_flight_and_inspect() {
+  return {type: "add_flight_and_inspect"};
+}
 
-export const MapActions = Reflux.createActions([
-  'setCenter', 'fitBounds', 'clicked', 'disableInteraction',
-  'enableInteraction', 'registerMapConfig', 'setFeature',
-]);
+export function set_flight_name(flight_id, name) {
+  return {type: "set_flight_name", flight_id, name};
+}
 
-export const LocationActions = Reflux.createActions([
-  'geocodeForward', 'selectLocation', 'selectHighlighted',
-  'highlightNext', 'highlightPrevious', 'openSearch',
-  'clearResults', 'setHighlight'
-]);
+export function set_flight_origin(flight_id, location) {
+  return {type: "set_flight_origin", flight_id, location};
+}
 
-export const TimelineActions = Reflux.createActions([
-  'play', 'stop', 'setCenter'
-]);
+export function set_flight_destination(flight_id, location) {
+  return {type: "set_flight_destination", flight_id, location};
+}
 
-export const Time = new TimeStream();
+export function set_keyframe(time, value) {
+  return {type: "set_keyframe", time, value};
+}
+
+export function set_inspector(key, data) {
+  return {type: "set_inspector", key, data};
+}
+
+export function receive_frame(global_time) {
+  return {type: "receive_frame", global_time};
+}
+
+export function toggle_playback() {
+  return (dispatch, get_state) => {
+    if (get_state().playback.playing) {
+      dispatch(stop_playback());
+    } else {
+      dispatch(start_playback());
+    }
+  };
+}
+
+export function stop_playback() {
+  return {type: "stop_playback"};
+}
+
+export function start_playback() {
+  return (dispatch, get_state) => {
+
+    function callback(global_time) {
+      dispatch(receive_frame(global_time));
+
+      if (get_state().playback.playing) {
+        requestAnimationFrame(callback);
+      }
+    }
+
+    requestAnimationFrame(callback);
+  };
+}

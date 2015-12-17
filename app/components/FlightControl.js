@@ -1,15 +1,16 @@
 import React from 'react';
 
+import { set_flight_name, set_flight_origin, set_flight_destination } from '../actions';
 import LocationControl from './LocationControl';
 
-const FlightControl = props => {
-  let {flight} = props;
 
-  function select(loc, res) {
-    let coordinates = res.geometry.coordinates;
-    loc.latitude = coordinates[1];
-    loc.longitude = coordinates[0];
-  }
+function get_coordinates(res) {
+  let [latitude, longitude] = res.geometry.coordinates;
+  return {latitude, longitude};
+}
+
+const FlightControl = props => {
+  let {flight, dispatch} = props;
 
   return (
     <div>
@@ -17,15 +18,16 @@ const FlightControl = props => {
       <div>
         <input
           placeholder="Name"
+
           value={ flight.name }
-          onChange={ e => flight.name = e.target.value }
+          onChange={ e => dispatch(set_flight_name(flight.id, e.target.value)) }
         />
       </div>
       <LocationControl
-        onResultSelected={ result => select(flight.from, result) }
+        onResultSelected={ r => dispatch(set_flight_origin(flight.id, get_coordinates(r))) }
       />
-      <LocationControl 
-        onResultSelected={ result => select(flight.to, result) }
+      <LocationControl
+        onResultSelected={ r => dispatch(set_flight_destination(flight.id, get_coordinates(r))) }
       />
     </div>
   );

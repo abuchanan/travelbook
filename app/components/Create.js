@@ -6,10 +6,15 @@ const Create = ({inspector}, {actions: {flights}}) => {
     var flight = flights.add();
     inspector.active = "flight";
     inspector.data = flight;
+
+    act('flight added', id);
+    act('flight inspector focused', id);
   }
 
   function activate_directions() {
     inspector.active = "directions";
+
+    act('directions inspector focused');
   }
 
   return (<div id="create-inspector">

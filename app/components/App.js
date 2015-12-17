@@ -1,8 +1,6 @@
 import React from 'react';
 
-import { add_flight } from '../flights';
-import { add_drive } from '../drives';
-import { toggle as toggle_playback } from '../playback';
+import { toggle_playback, add_flight_and_inspect, set_inspector } from '../actions';
 
 import Map from './map';
 import FlightControl from './FlightControl';
@@ -14,58 +12,45 @@ import { ListInspector } from './ListInspector';
 
 export const App = React.createClass({
 
-  getInitialState() {
-    return {
-      inspector: {
-        active: null,
-        data: null,
-      }
-    };
-  },
-
-  set_inspector(key, data) {
-    this.setState({
-      inspector: {
-        active: key,
-        data,
-      }
-    });
-  },
-
   render() {
-    let appState = this.props.appState;
 
     let {
+      dispatch,
       flights,
       drives,
       map,
-      playback,
-    } = appState;
-    let playing = playback.playing;
-
-    let {
+      playback: {
+        playing
+      },
       inspector,
-    } = this.state;
+    } = this.props;
+
 
     return (
       <div>
         <div className="travel-map-controls">
           <Toolbar>
-            <PlaybackButton onClick={() => toggle_playback(playback)} playing={playing} />
-            <div><button onClick={() => this.set_inspector("list")}>List</button></div>
-            <div><button onClick={() => this.set_inspector("create")}>Create</button></div>
+            <PlaybackButton onClick={() => dispatch(toggle_playback()) } playing={playing} />
+            <div><button onClick={() => dispatch(set_inspector("list")) }>List</button></div>
+            <div><button onClick={() => dispatch(set_inspector("create")) }>Create</button></div>
           </Toolbar>
 
-          <Inspector active={inspector.active}>
+          <Inspector active={inspector.key}>
+
             <div id="create-inspector" key="create">
               <h1>Create</h1>
-              <div><button onClick={() => this.set_inspector("flight", add_flight(flights))}>Flight</button></div>
-              <div><button onClick={() => this.set_inspector("directions", add_drive(drives))}>Directions</button></div>
+              <div><button onClick={() => dispatch(add_flight_and_inspect()) }>Flight</button></div>
+              <div><button onClick={() => dispatch(add_drive()) }>Directions</button></div>
             </div>
 
-            <FlightControl key="flight" flight={inspector.data} />
-            <DirectionsInspector key="directions" drive={inspector.data} />
-            <ListInspector key="list" flights={flights} drives={drives} onSelect={this.set_inspector} />
+            <FlightControl key="flight" dispatch={dispatch} flight={ flights[inspector.data] } />
+
+            <ListInspector
+              key="list"
+              flights={flights}
+              drives={drives}
+              onSelect={ (type, data) => dispatch(set_inspector(type, data)) }
+            />
           </Inspector>
         </div>
 

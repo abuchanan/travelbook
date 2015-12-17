@@ -1,16 +1,29 @@
 
-function update_time(state, global_time) {
+export const initial_playback_state = {
+  playing: false,
+  stop_on_next: false,
+  global_start_time: -1,
+  end_time: Number.POSITIVE_INFINITY,
+  previous_time: -1,
+  current_time: 0,
+};
 
-  if (state.stop) {
-    reset(state);
-    return;
+
+export function on_receive_frame(playback_state, global_time) {
+
+  if (playback_state.stop_on_next) {
+    return playback_state.merge(initial_playback_state);
   }
 
-  // This is the first frame, so we initialize the start time and return.
-  // The stream will start generating time on the next frame.
-  if (state.start_time == -1) {
-    state.start_time = global_time;
-    return;
+  // The first frame is a special case where the current and previous
+  // playback time are 0 and the start time is now.
+  if (playback_state.global_start_time == -1) {
+    return playback_state.merge({
+      global_start_time: global_time,
+      previous_time: 0,
+      current_time: 0,
+      playing: true,
+    });
   }
 
   // TODO time management here is wrong. If the next global timestamp is
@@ -18,57 +31,16 @@ function update_time(state, global_time) {
   //      should the next frame really jump 10 seconds forward? Or should jump
   //      one frame forward. I guess this is a question of how strongly to tie
   //      animation to actual global time.
-  var current_time = global_time - state.start_time;
+  var current_time = global_time - playback_state.global_start_time;
 
-  // On the first frame of playback, the previous time equals the current time.
-  if (state.previous_time == -1) {
-    state.previous_time = current_time;
-  } else {
-    state.previous_time = state.current_time;
+  // Stop if playback has reached the end time.
+  if (current_time >= playback_state.end_time) {
+    return playback_state.merge(initial_playback_state);
   }
 
-  if (state.end_time != -1 && current_time >= state.end_time) {
-    stop(state);
-    return;
-  }
-
-  state.current_time = current_time;
-}
-
-
-// TODO by looking at this function, it's hard to know which part of the state tree
-//      it relates to.
-function reset(state) {
-  console.log("reset");
-  state.stop = false;
-  state.playing = false;
-  state.start_time = -1;
-  state.previous_time = -1;
-  state.current_time = 0;
-}
-
-export function stop(state) {
-  state.stop = true;
-}
-
-export function start(state) {
-
-  function callback(global_time) {
-    if (state.playing) {
-      update_time(state, global_time);
-      requestAnimationFrame(callback);
-    }
-  }
-
-  state.playing = true;
-  requestAnimationFrame(callback);
-}
-
-
-export function toggle(state) {
-  if (state.playing) {
-    stop(state);
-  } else {
-    start(state);
-  }
+  return playback_state.merge({
+    current_time,
+    previous_time: playback_state.current_time,
+    playing: true,
+  });
 }

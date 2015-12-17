@@ -131,13 +131,6 @@ const MapComponent = React.createClass({
     }
 
     console.log("jump to ", center.longitude, center.latitude);
-    // mapbox.jumpTo({
-    //   center: {
-    //     lng: center.longitude,
-    //     lat: center.latitude,
-    //   },
-    //   zoom,
-    // });
 
     // Mapbox tile rendering performance improves when you stick
     // to positive longitudes (edge case).
@@ -146,7 +139,10 @@ const MapComponent = React.createClass({
       lng = 360 + (lng % -360);
     }
 
-    mapbox.setCenter([lng, center.latitude]);
+    mapbox.jumpTo({
+      center: {lng, lat: center.latitude},
+      zoom,
+    });
 
     for (let key of this.sources.keys()) {
       if (!sources.has(key)) {
@@ -156,8 +152,8 @@ const MapComponent = React.createClass({
       }
     }
 
-    for (var source of sources.entries()) {
-      var [source_id, features] = source;
+    for (let source_id in sources) {
+      let source = sources[source_id];
 
       if (!this.sources.has(source_id)) {
         var source = new MapboxGL.GeoJSONSource();

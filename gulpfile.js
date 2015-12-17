@@ -1,7 +1,6 @@
 var gulp          = require('gulp');
 var path          = require('path');
 var browserify    = require('browserify-incremental');
-//var babelify      = require('babelify');
 var del           = require('del');
 var source        = require('vinyl-source-stream');
 var runSequence   = require('run-sequence');
@@ -34,7 +33,7 @@ var toCopy = [
 
 gulp.task('copy', function() {
   return gulp
-    .src(toCopy, {base: './app'})
+    .src('app/**/*', {base: './app'})
     .pipe(gulp.dest(BUILD_DIR));
 });
 
@@ -49,18 +48,14 @@ var buildNotification;
 
 gulp.task('browserify', function() {
   var browserifyConfig = {
-    entries: ['./app/app.js'],
+    entries: ['./build/app.js'],
     cacheFile: './browserify-incremental-cache.json',
     debug: true,
+    transform: ["babelify"],
+    baseDir: __dirname,
   };
 
-  var babelConfig = {
-    optional: ['es7.classProperties'],
-    sourceMapRelative: __dirname,
-  }
-
   return browserify(browserifyConfig)
-    .transform("babelify", babelConfig)
     .bundle()
     .on('error', function(err) {
       // Remove __dirname from the error message to make it more easily readable.
@@ -150,7 +145,7 @@ gulp.task('watch', function() {
   if (BuildResult.number  == 0) {
     TaskSet('build', 'serve')();
   }
-  gulp.watch('app/**/*.js', TaskSet('browserify'));
+  gulp.watch('app/**/*.js', TaskSet('copy', 'browserify'));
   gulp.watch(toCopy, TaskSet('copy'));
 });
 
