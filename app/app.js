@@ -27,6 +27,34 @@ function on_tick_playback(state) {
     let flight = flights[flight_id];
     state = playback_flight(state, flight, current_time);
   }
+
+  state = playback_map_follow(state, current_time);
+  return state;
+}
+
+function get_path(state, path) {
+  var ret;
+  for (let key of path) {
+    if (ret === undefined) {
+      ret = state[key];
+    } else {
+      ret = ret[key];
+    }
+  }
+  return ret;
+}
+
+function playback_map_follow(state, current_time) {
+  let active_track = state.tracks['map_follow_active'];
+  let active = Keyframes.get_value(active_track, current_time);
+
+  if (active) {
+    let target_track = state.tracks['map_follow_target'];
+    let target_id = Keyframes.get_value(target_track);
+    let target = get_path(state, target_id);
+    state = state.setIn(["map", "center"], target);
+  }
+
   return state;
 }
 
@@ -36,7 +64,10 @@ const initial_state = Immutable({
 
   flights: {},
   drives: {},
-  tracks: {},
+  tracks: {
+    map_follow_active: [],
+    map_follow_target: [],
+  },
 
   map: {
     sources: {},
@@ -108,6 +139,14 @@ function app(state = initial_state, action) {
       Keyframes.set_keyframe(track, 0, 0);
       Keyframes.set_keyframe(track, 5000, 1);
 
+      let follow_track_active = [];
+      let follow_track_target = [];
+
+      Keyframes.set_keyframe(follow_track_active, 0, 1);
+      Keyframes.set_keyframe(follow_track_active, 5000, 0);
+
+      Keyframes.set_keyframe(follow_track_target, 0, ['flights', flight.id, 'current_point']);
+
       // TODO this is why I hate immutable code.
       //      the subtle bug here is that state.flights.set returns
       //      the _flights_ state object, not the whole state.
@@ -120,6 +159,8 @@ function app(state = initial_state, action) {
         .set('flights', {[flight.id]: flight})
         .setIn(['flights', flight.id, 'track_ids', 'progress'], progress_track_id)
         .setIn(['tracks', progress_track_id], track)
+        .setIn(['tracks', 'map_follow_active'], follow_track_active)
+        .setIn(['tracks', 'map_follow_target'], follow_track_target)
         .set('inspector', {key: 'flight', data: flight.id});
 
     default:

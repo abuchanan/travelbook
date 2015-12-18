@@ -90,6 +90,10 @@ function slice_line(source, percent) {
   return clone;
 }
 
+function line_last_point(line) {
+  return line.geometry.coordinates[line.geometry.coordinates.length - 1];
+}
+
 export function playback_flight(state, flight, current_time) {
   // TODO update visible track
 
@@ -97,27 +101,40 @@ export function playback_flight(state, flight, current_time) {
   let progress = get_progress(progress_track, current_time);
   flight = flight.set("progress", progress);
 
-  let slice;
+  let slice, current_point;
+
   if (flight.arc.geometry.type == "MultiLineString") {
     slice = Multiline.slice(flight.arc, flight.progress);
+    let lp;
+
+    if (slice.geometry.coordinates.length > 0) {
+      lp = Multiline.last_point(slice);
+    } else {
+      lp = Multiline.last_point(flight.arc);
+    }
+
+    current_point = {longitude: lp[0], latitude: lp[1]};
+
   } else {
     slice = slice_line(flight.arc, flight.progress);
+    let lp;
+
+    if (slice.geometry.coordinates.length > 0) {
+      lp = line_last_point(slice);
+    } else {
+      lp = line_last_point(flight.arc);
+    }
+
+    current_point = {longitude: lp[0], latitude: lp[1]};
   }
 
-  // if (slice.geometry.coordinates.length > 0) {
-  //   let lp = Multiline.last_point(slice);
-  //   flight.last_point.longitude = lp[0];
-  //   flight.last_point.latitude = lp[1];
-  // }
+  flight = flight.set("current_point", current_point);
+
 
   if (flight.visible && flight.progress > 0) {
     state = state.setIn(["map", "sources", flight.id], [slice]);
   }
 
-  // TODO this is why I hate this style of programming
   state = state.setIn(["flights", flight.id], flight);
   return state;
-
-
-  // TODO update follow track. be able to follow if invisible.
 }
