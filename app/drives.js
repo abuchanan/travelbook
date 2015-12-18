@@ -1,67 +1,102 @@
+import extend from 'extend';
+
 import * as Keyframes from './keyframes';
 import * as transitions from './transitions';
 import { generate_id } from './utils';
-import { Record, List } from './schema/defs';
 
 
-const Drive = Record({
+const Location = {
+  name: "",
+  latitude: 0,
+  longitude: 0,
+};
+
+const Drive = {
   id: "",
   name: "Untitled",
+  origin: Location,
+  destination: Location,
+  route: {},
+  arc: null,
+
   visible: true,
   progress: 1,
-  route: {
-    coordinates: List(),
+
+  track_ids: {
+    visible: "",
+    progress: "",
+    follow: "",
   },
-  tracks: {
-    visible: List(),
-    progress: List(),
-    follow: List(),
-  },
-  features: List(),
-});
+};
 
 
-export function add_drive(drives) {
-  let id = generate_id();
-  let drive = drives.get(id);
-  drive.id = id;
-
-  drive.tracks.visible.keyframes.add();
-  drive.tracks.progress.keyframes.add();
-
+export function create_drive() {
+  let drive = extend(true, {}, Drive);
+  drive.id = generate_id();
   return drive;
 }
 
-function get_progress_track_value(track, time) {
-  let [start, end] = Keyframes.get_keyframes(track.keyframes, time);
+function get_progress(progress_track, current_time) {
+  let [start, end] = Keyframes.get_keyframes(progress_track, current_time);
 
-  // In this case we're past the last keyframe.
-  if (end === undefined) {
+  if (!end) {
     return start.value;
   }
 
-  let percent = (time - start.time) / (end.time - start.time);
-  return transitions.linear(percent, start.value, end.value);
+  let percent_complete = (current_time - start.time) / (end.time - start.time);
+  let progress = transitions.linear(percent_complete, start.value, end.value);
+
+  if (progress > 1) {
+    progress = 1;
+  } else if (progress < 0) {
+    progress = 0;
+  }
+
+  return progress;
 }
 
-export function update_drives(time, drives, map) {
+function slice_line(source, percent) {
+  let source_length = source.geometry.coordinates.length;
+  let slice_length = Math.floor(source_length * percent);
+  let clone = extend(true, {}, source);
 
-  for (var drive of drives.values()) {
-
-    // TODO This should check if route is set to useful values and if not
-    //      remove the map feature data.
-    if (drive.visible && drive.progress > 0) {
-      let slice_length = Math.floor(drive.progress * drive.route.coordinates.length);
-      map.sources.set(drive.id, [{
-        type: "Feature",
-        geometry: {
-          type: "LineString",
-          // TODO using internal __storage
-          coordinates: drive.route.coordinates.__storage.slice(0, slice_length),
-        },
-      }]);
-    } else {
-      map.sources.delete(drive.id);
-    }
+  if (slice_length < 2) {
+    clone.geometry.coordinates = [];
+    return clone;
   }
+
+  if (slice_length > source_length) {
+    slice_length = source_length;
+  }
+
+  let slice = source.geometry.coordinates.slice(0, slice_length);
+  clone.geometry.coordinates = slice;
+  return clone;
+}
+
+function make_feature(coordinates) {
+  return {
+    type: "Feature",
+    geometry: {
+      type: "LineString",
+      coordinates,
+    },
+  };
+}
+
+export function playback_drive(state, drive, current_time) {
+  let progress_track = state.tracks[drive.track_ids.progress];
+  let progress = get_progress(progress_track, current_time);
+
+  let feature = make_feature(drive.route);
+
+  drive = drive.set('progress', progress);
+  let slice = slice_line(feature, drive.progress);
+
+  if (drive.visible && drive.progress > 0) {
+    state = state.setIn(["map", "sources", drive.id], [slice]);
+  }
+
+  return state.
+    setIn(['drives', drive.id], drive);
 }

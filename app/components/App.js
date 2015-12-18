@@ -1,12 +1,5 @@
 import React from 'react';
 
-import {
-  toggle_playback,
-  add_flight_and_inspect,
-  set_inspector,
-  set_map_position
-} from '../actions';
-
 import Map from './map';
 import FlightControl from './FlightControl';
 import { DirectionsInspector } from './DirectionsInspector';
@@ -28,33 +21,56 @@ export const App = React.createClass({
         playing
       },
       inspector,
+      dispatchers: {
+        toggle_playback,
+        set_inspector,
+        add_flight_and_inspect,
+        add_drive_and_inspect,
+        set_map_position,
+        save,
+        load
+      }
     } = this.props;
 
-
+    // TODO could try inspect(add_flight())
+    //      maybe actions should be promises?
     return (
       <div>
         <div className="travel-map-controls">
           <Toolbar>
-            <PlaybackButton onClick={() => dispatch(toggle_playback()) } playing={playing} />
-            <div><button onClick={() => dispatch(set_inspector("list")) }>List</button></div>
-            <div><button onClick={() => dispatch(set_inspector("create")) }>Create</button></div>
+            <PlaybackButton onClick={ toggle_playback } playing={playing} />
+            <div><button onClick={ save }>Save</button></div>
+            <div><button onClick={ load }>Load</button></div>
+
+            <div><button onClick={() => set_inspector("list") }>List</button></div>
+            <div><button onClick={() => set_inspector("create") }>Create</button></div>
           </Toolbar>
 
           <Inspector active={inspector.key}>
 
             <div id="create-inspector" key="create">
               <h1>Create</h1>
-              <div><button onClick={() => dispatch(add_flight_and_inspect()) }>Flight</button></div>
-              <div><button onClick={() => dispatch(add_drive()) }>Directions</button></div>
+              <div><button onClick={ add_flight_and_inspect }>Flight</button></div>
+              <div><button onClick={ add_drive_and_inspect }>Directions</button></div>
             </div>
 
-            <FlightControl key="flight" dispatch={dispatch} flight={ flights[inspector.data] } />
+            <FlightControl
+              key="flight"
+              dispatchers={this.props.dispatchers}
+              flight={ flights[inspector.data] }
+            />
+
+            <DirectionsInspector
+              key="drives"
+              drive={ drives[inspector.data] }
+              dispatchers={this.props.dispatchers}
+            />
 
             <ListInspector
               key="list"
               flights={flights}
               drives={drives}
-              onSelect={ (type, data) => dispatch(set_inspector(type, data)) }
+              onSelect={ set_inspector }
             />
           </Inspector>
         </div>
@@ -62,7 +78,7 @@ export const App = React.createClass({
         <Map
           map={map}
           interactive={!playing}
-          onMove={ (zoom, center) => dispatch(set_map_position(zoom, center)) }
+          onMove={ set_map_position }
         />
       </div>
     );

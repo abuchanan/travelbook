@@ -23,7 +23,7 @@ const Flight = {
   visible: true,
   progress: 1,
 
-  tracks_ids: {
+  track_ids: {
     visible: "",
     progress: "",
     follow: "",

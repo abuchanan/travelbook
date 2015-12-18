@@ -14,10 +14,12 @@ export const DirectionsInspector = React.createClass({
   },
 
   componentDidMount() {
+    let set_drive_route = this.props.dispatchers.set_drive_route;
+
     this.directions = new Directions(results => {
       console.log("directions results", results);
-      this.props.drive.route.coordinates.clear();
-      this.props.drive.route.coordinates.extend(results.results.routes[0].geometry.coordinates);
+      let route = results.results.routes[0].geometry.coordinates;
+      set_drive_route(this.props.drive.id, route);
     });
   },
 
