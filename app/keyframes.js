@@ -3,23 +3,23 @@ export function set_keyframe(keyframes, time, value, transition) {
   var toSet = {time, value, transition};
 
   for (var i = 0; i < keyframes.length; i++) {
-    var keyframe = keyframes.get(i);
+    var keyframe = keyframes[i];
 
     if (keyframe.time == time) {
-      keyframes.set(i, toSet);
+      keyframes[i] = toSet;
       return;
     } else if (time < keyframe.time) {
-      keyframes.insert(i, toSet);
+      keyframes.splice(i, toSet);
       return;
     }
   }
 
-  keyframes.append(toSet);
+  keyframes.push(toSet);
 }
 
 export function get_keyframes(keyframes, time) {
   var i = 0;
-  while (i < keyframes.length && time >= keyframes.get(i).time) {
+  while (i < keyframes.length && time >= keyframes[i].time) {
     i++;
   }
 
@@ -30,10 +30,10 @@ export function get_keyframes(keyframes, time) {
   let next_keyframe = undefined;
 
   if (i < keyframes.length - 1) {
-    next_keyframe = keyframes.get(i + 1);
+    next_keyframe = keyframes[i + 1];
   }
 
-  return [keyframes.get(i), next_keyframe];
+  return [keyframes[i], next_keyframe];
 }
 
 export function get_value(keyframes, time) {

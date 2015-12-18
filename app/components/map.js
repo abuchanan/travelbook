@@ -57,7 +57,7 @@ const MapComponent = React.createClass({
   },
 
   componentDidMount() {
-    let map = this.props.map;
+    let {map, onMove} = this.props;
 
     this.loaded = false;
     this.mapbox = new MapboxGL.Map({
@@ -74,14 +74,26 @@ const MapComponent = React.createClass({
       self.updateMap(self.props);
     });
 
-    mapbox.on("move", (...args) => {
-      var new_center = self.mapbox.getCenter();
-  //    map.center.latitude = new_center.lat;
-  //    map.center.longitude = new_center.lng;
-
-      console.log("move");
-      //map.zoom = mapbox.getZoom();
+    mapbox.on('move', () => {
+      // Don't trigger the onMove callback if the current mapbox position matches
+      // the position in the app state. This can happen when the position is updated
+      // from the app state, which updates Mapbox, which triggers this "move" event,
+      // and you get a circle of updates.
+      if (this.is_position_different(map.zoom, map.center)) {
+        let z = mapbox.getZoom();
+        let c = mapbox.getCenter();
+        onMove(z, {
+          longitude: c.lng,
+          latitude: c.lat
+        });
+      }
     });
+  },
+
+  is_position_different(zoom, center) {
+    let z = this.mapbox.getZoom();
+    let c = this.mapbox.getCenter();
+    return (z != zoom || center.latitude != c.lat || center.longitude != c.lng);
   },
 
   addLayers(mapbox, source_id) {
@@ -130,22 +142,25 @@ const MapComponent = React.createClass({
       mapbox.interaction.disable();
     }
 
-    console.log("jump to ", center.longitude, center.latitude);
+    if (this.is_position_different(zoom, center)) {
+      // Mapbox tile rendering performance improves when you stick
+      // to positive longitudes (edge case).
+      let lng = center.longitude;
+      if (lng < 0) {
+        lng = 360 + (lng % -360);
+      }
 
-    // Mapbox tile rendering performance improves when you stick
-    // to positive longitudes (edge case).
-    let lng = center.longitude;
-    if (lng < 0) {
-      lng = 360 + (lng % -360);
+      mapbox.jumpTo({
+        center: {
+          lng,
+          lat: center.latitude
+        },
+        zoom,
+      });
     }
 
-    mapbox.jumpTo({
-      center: {lng, lat: center.latitude},
-      zoom,
-    });
-
     for (let key of this.sources.keys()) {
-      if (!sources.has(key)) {
+      if (!sources[key]) {
         mapbox.removeSource(key);
         this.removeLayers(mapbox, key);
         this.sources.delete(key);
@@ -153,20 +168,24 @@ const MapComponent = React.createClass({
     }
 
     for (let source_id in sources) {
-      let source = sources[source_id];
-
-      if (!this.sources.has(source_id)) {
-        var source = new MapboxGL.GeoJSONSource();
-        this.sources.set(source_id, source);
-        mapbox.addSource(source_id, source);
-        this.addLayers(mapbox, source_id);
-      }
-
-      this.sources.get(source_id).setData({
+      this.get_or_create_source(source_id).setData({
          "type": "FeatureCollection",
-         "features": features,
+         "features": sources[source_id],
       });
     }
+  },
+
+  get_or_create_source(id) {
+    var source;
+    if (!this.sources.has(id)) {
+      source = new MapboxGL.GeoJSONSource();
+      this.sources.set(id, source);
+      mapbox.addSource(id, source);
+      this.addLayers(mapbox, id);
+    } else {
+      source = this.sources.get(id);
+    }
+    return source;
   },
 
   componentWillReceiveProps(props) {
@@ -180,7 +199,6 @@ const MapComponent = React.createClass({
   },
 
   render() {
-    console.log("render");
     return (
       <div
         className="travel-map"

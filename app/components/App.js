@@ -1,6 +1,11 @@
 import React from 'react';
 
-import { toggle_playback, add_flight_and_inspect, set_inspector } from '../actions';
+import {
+  toggle_playback,
+  add_flight_and_inspect,
+  set_inspector,
+  set_map_position
+} from '../actions';
 
 import Map from './map';
 import FlightControl from './FlightControl';
@@ -54,7 +59,11 @@ export const App = React.createClass({
           </Inspector>
         </div>
 
-        <Map map={map} interactive={!playing} />
+        <Map
+          map={map}
+          interactive={!playing}
+          onMove={ (zoom, center) => dispatch(set_map_position(zoom, center)) }
+        />
       </div>
     );
   },

@@ -1,13 +1,5 @@
 
 
-
-// const STORAGE_KEY = "travel-book-storage-v1";
-
-
-function update_view() {
-  render(<App appState={state} />, container);
-}
-
 function update_sources() {
   let entities = [...state.flights.values(), ...state.drives.values()];
 

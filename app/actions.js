@@ -19,6 +19,10 @@ export function set_flight_destination(flight_id, location) {
   return {type: "set_flight_destination", flight_id, location};
 }
 
+export function set_map_position(zoom, center) {
+  return {type: "set_map_position", zoom, center};
+}
+
 export function set_keyframe(time, value) {
   return {type: "set_keyframe", time, value};
 }

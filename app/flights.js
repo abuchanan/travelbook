@@ -1,9 +1,10 @@
 import extend from 'extend';
-import arc from 'arc';
+import arc from './lib/arc';
 
 import * as Multiline from './multiline';
 import { generate_id } from './utils';
-import { Record, List } from './schema/defs';
+import * as Keyframes from './keyframes';
+import { linear as linear_transition } from './transitions';
 
 
 const Location = {
@@ -15,20 +16,18 @@ const Location = {
 const Flight = {
   id: "",
   name: "Untitled",
-  from: Location,
-  to: Location,
+  origin: Location,
+  destination: Location,
+  arc: null,
+
   visible: true,
   progress: 1,
-  last_point: {
-    latitude: 0,
-    longitude: 0,
+
+  tracks_ids: {
+    visible: "",
+    progress: "",
+    follow: "",
   },
-  tracks: {
-    visible: [],
-    progress: [],
-    follow: [],
-  },
-  features: [],
 };
 
 
@@ -44,17 +43,22 @@ export function flight_arc(flight, options) {
   };
   options = extend({}, default_options, options);
 
-  let from = {x: flight.from.longitude, y: flight.from.latitude};
-  let to = {x: flight.to.longitude, y: flight.to.latitude};
+  let origin = {x: flight.origin.longitude, y: flight.origin.latitude};
+  let destination = {x: flight.destination.longitude, y: flight.destination.latitude};
   let properties = {};
 
-  let generator = new arc.GreatCircle(from, to, properties);
+  let generator = new arc.GreatCircle(origin, destination, properties);
   return generator.Arc(options.resolution).json();
 }
 
 
-function get_progress(flight, current_time) {
-  let [start, end] = Keyframes.get_keyframes(flight.tracks.progress, current_time);
+function get_progress(progress_track, current_time) {
+  let [start, end] = Keyframes.get_keyframes(progress_track, current_time);
+
+  if (!end) {
+    return start.value;
+  }
+
   let percent_complete = (current_time - start.time) / (end.time - start.time);
   let progress = linear_transition(percent_complete, start.value, end.value);
 
@@ -67,25 +71,53 @@ function get_progress(flight, current_time) {
   return progress;
 }
 
-export function update_flight_playback(flight, current_time) {
-  // TODO update visible track
-  flight.progress = get_progress(flight, current_time);
+function slice_line(source, percent) {
+  let source_length = source.geometry.coordinates.length;
+  let slice_length = Math.floor(source_length * percent);
+  let clone = extend(true, {}, source);
 
-  // TODO This should check if from/to are set to useful values
-  let reference_line = flight_arc(flight);
-  let slice = Multiline.slice(reference_line, flight.progress);
-
-  if (slice.geometry.coordinates.length > 0) {
-    let lp = Multiline.last_point(slice);
-    flight.last_point.longitude = lp[0];
-    flight.last_point.latitude = lp[1];
+  if (slice_length < 2) {
+    clone.geometry.coordinates = [];
+    return clone;
   }
 
-  flight.features.clear();
+  if (slice_length > source_length) {
+    slice_length = source_length;
+  }
+
+  let slice = source.geometry.coordinates.slice(0, slice_length);
+  clone.geometry.coordinates = slice;
+  return clone;
+}
+
+export function playback_flight(state, flight, current_time) {
+  // TODO update visible track
+
+  let progress_track = state.tracks[flight.track_ids.progress];
+  let progress = get_progress(progress_track, current_time);
+  flight = flight.set("progress", progress);
+
+  let slice;
+  if (flight.arc.geometry.type == "MultiLineString") {
+    slice = Multiline.slice(flight.arc, flight.progress);
+  } else {
+    slice = slice_line(flight.arc, flight.progress);
+  }
+
+  // if (slice.geometry.coordinates.length > 0) {
+  //   let lp = Multiline.last_point(slice);
+  //   flight.last_point.longitude = lp[0];
+  //   flight.last_point.latitude = lp[1];
+  // }
 
   if (flight.visible && flight.progress > 0) {
-    flight.features.append(slice);
+    state = state.setIn(["map", "sources", flight.id], [slice]);
   }
+
+  // TODO this is why I hate this style of programming
+  state = state.setIn(["flights", flight.id], flight);
+  return state;
+
 
   // TODO update follow track. be able to follow if invisible.
 }

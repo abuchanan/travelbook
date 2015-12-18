@@ -4,9 +4,9 @@ import { set_flight_name, set_flight_origin, set_flight_destination } from '../a
 import LocationControl from './LocationControl';
 
 
-function get_coordinates(res) {
-  let [latitude, longitude] = res.geometry.coordinates;
-  return {latitude, longitude};
+function get_location(res) {
+  let [longitude, latitude] = res.geometry.coordinates;
+  return {name: res.place_name, latitude, longitude};
 }
 
 const FlightControl = props => {
@@ -24,10 +24,10 @@ const FlightControl = props => {
         />
       </div>
       <LocationControl
-        onResultSelected={ r => dispatch(set_flight_origin(flight.id, get_coordinates(r))) }
+        onResultSelected={ r => dispatch(set_flight_origin(flight.id, get_location(r))) }
       />
       <LocationControl
-        onResultSelected={ r => dispatch(set_flight_destination(flight.id, get_coordinates(r))) }
+        onResultSelected={ r => dispatch(set_flight_destination(flight.id, get_location(r))) }
       />
     </div>
   );
