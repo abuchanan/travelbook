@@ -37,7 +37,7 @@ export function create_drive() {
 }
 
 function get_progress(progress_track, current_time) {
-  let [start, end] = Keyframes.get_keyframes(progress_track, current_time);
+  let [start, end] = Keyframes.get_keyframes(progress_track.keyframes, current_time);
 
   if (!end) {
     return start.value;
@@ -90,13 +90,12 @@ export function playback_drive(state, drive, current_time) {
 
   let feature = make_feature(drive.route);
 
-  drive = drive.set('progress', progress);
+  drive.progress = progress;
   let slice = slice_line(feature, drive.progress);
 
   if (drive.visible && drive.progress > 0) {
-    state = state.setIn(["map", "sources", drive.id], [slice]);
+    state.map.sources[drive.id] = [slice];
   }
 
-  return state.
-    setIn(['drives', drive.id], drive);
+  state.drives[drive.id] = drive;
 }

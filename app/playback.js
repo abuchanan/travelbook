@@ -1,29 +1,34 @@
+import extend from 'extend';
+import { readonly } from './readonly';
 
-export const initial_playback_state = {
+
+export const initial_playback_state = readonly({
   playing: false,
   stop_on_next: false,
   global_start_time: -1,
   end_time: Number.POSITIVE_INFINITY,
   previous_time: -1,
   current_time: 0,
-};
+});
 
 
 export function on_receive_frame(playback_state, global_time) {
 
   if (playback_state.stop_on_next) {
-    return playback_state.merge(initial_playback_state);
+    extend(playback_state, initial_playback_state);
+    return;
   }
 
   // The first frame is a special case where the current and previous
   // playback time are 0 and the start time is now.
   if (playback_state.global_start_time == -1) {
-    return playback_state.merge({
+    extend(playback_state, {
       global_start_time: global_time,
       previous_time: 0,
       current_time: 0,
       playing: true,
     });
+    return;
   }
 
   // TODO time management here is wrong. If the next global timestamp is
@@ -35,10 +40,11 @@ export function on_receive_frame(playback_state, global_time) {
 
   // Stop if playback has reached the end time.
   if (current_time >= playback_state.end_time) {
-    return playback_state.merge(initial_playback_state);
+    extend(playback_state, initial_playback_state);
+    return;
   }
 
-  return playback_state.merge({
+  extend(playback_state, {
     current_time,
     previous_time: playback_state.current_time,
     playing: true,

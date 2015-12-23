@@ -53,7 +53,7 @@ export function flight_arc(flight, options) {
 
 
 function get_progress(progress_track, current_time) {
-  let [start, end] = Keyframes.get_keyframes(progress_track, current_time);
+  let [start, end] = Keyframes.get_keyframes(progress_track.keyframes, current_time);
 
   if (!end) {
     return start.value;
@@ -99,7 +99,7 @@ export function playback_flight(state, flight, current_time) {
 
   let progress_track = state.tracks[flight.track_ids.progress];
   let progress = get_progress(progress_track, current_time);
-  flight = flight.set("progress", progress);
+  flight.progress = progress;
 
   let slice, current_point;
 
@@ -128,13 +128,12 @@ export function playback_flight(state, flight, current_time) {
     current_point = {longitude: lp[0], latitude: lp[1]};
   }
 
-  flight = flight.set("current_point", current_point);
+  flight.current_point = current_point;
 
 
   if (flight.visible && flight.progress > 0) {
-    state = state.setIn(["map", "sources", flight.id], [slice]);
+    state.map.sources[flight.id] = [slice];
   }
 
-  state = state.setIn(["flights", flight.id], flight);
-  return state;
+  state.flights[flight.id] = flight;
 }

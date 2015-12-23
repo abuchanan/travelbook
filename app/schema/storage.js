@@ -15,14 +15,7 @@ class SchemaDef {
 
 class Record {
 
-  constructor(on_change, value_type_def) {
-
-    Object.defineProperties(this, {
-      __on_change: {
-        value: on_change,
-        enumerable: false,
-      },
-    });
+  constructor(value_type_def) {
 
     for (let key in value_type_def) {
       let val = value_type_def[key];
@@ -56,12 +49,8 @@ class Record {
 
 class Dict {
 
-  constructor(on_change) {
+  constructor() {
     Object.defineProperties(this, {
-      __on_change: {
-        value: on_change,
-        enumerable: false,
-      },
       __storage: {
         value: new Map(),
         enumerable: false,
@@ -90,12 +79,10 @@ class Dict {
 
   set(key, value) {
     this.__storage.set(key, value);
-    this.__on_change();
   }
 
   delete(key) {
     this.__storage.delete(key);
-    this.__on_change();
   }
 
   keys() {
@@ -116,7 +103,6 @@ class Dict {
 
   clear() {
     this.__storage.clear();
-    this.__on_change();
   }
 }
 
@@ -125,10 +111,6 @@ class List {
 
   constructor(on_change) {
     Object.defineProperties(this, {
-      __on_change: {
-        value: on_change,
-        enumerable: false,
-      },
       __storage: {
         value: [],
         enumerable: false,
@@ -146,7 +128,6 @@ class List {
 
   set(index, value) {
     this.__storage[index] = value;
-    this.__on_change();
   }
 
   get length() {
@@ -155,12 +136,10 @@ class List {
 
   clear() {
     this.__storage.length = 0;
-    this.__on_change();
   }
 
   extend(vals) {
     this.__storage.push(...vals);
-    this.__on_change();
   }
 
   slice(...args) {
@@ -173,7 +152,6 @@ class List {
 
   append(...vals) {
     this.__storage.push(...vals);
-    this.__on_change();
   }
 }
 

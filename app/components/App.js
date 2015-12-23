@@ -6,16 +6,19 @@ import { DirectionsInspector } from './DirectionsInspector';
 import { Inspector } from './Inspector';
 import { Toolbar, InspectorButton, PlaybackButton } from './Toolbar';
 import { ListInspector } from './ListInspector';
+import { TrackInspector } from './TrackInspector';
 
 
 export const App = React.createClass({
 
   render() {
+    console.log("render app");
 
     let {
       dispatch,
       flights,
       drives,
+      tracks,
       map,
       playback: {
         playing
@@ -44,6 +47,8 @@ export const App = React.createClass({
 
             <div><button onClick={() => set_inspector("list") }>List</button></div>
             <div><button onClick={() => set_inspector("create") }>Create</button></div>
+            <div><button onClick={() => set_inspector("tracks") }>Tracks</button></div>
+
           </Toolbar>
 
           <Inspector active={inspector.key}>
@@ -71,6 +76,12 @@ export const App = React.createClass({
               flights={flights}
               drives={drives}
               onSelect={ set_inspector }
+            />
+
+            <TrackInspector
+              key="tracks"
+              tracks={tracks}
+              dispatchers={this.props.dispatchers}
             />
           </Inspector>
         </div>

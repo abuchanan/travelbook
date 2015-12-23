@@ -170,7 +170,7 @@ const MapComponent = React.createClass({
     for (let source_id in sources) {
       this.get_or_create_source(source_id).setData({
          "type": "FeatureCollection",
-         "features": sources[source_id],
+         "features": sources[source_id].clone(),
       });
     }
   },
