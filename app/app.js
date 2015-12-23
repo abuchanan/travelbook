@@ -184,7 +184,7 @@ let simple_handlers = {
 
     let progress_track_id = flight.id + '-progress-track';
     let progress_track = {
-      name: "Flight: " + flight.name,
+      name: "Flight Progress: " + flight.name,
       keyframes: [],
     };
     Keyframes.set_keyframe(progress_track.keyframes, 0, 0);
@@ -275,6 +275,7 @@ function app(state = initial_state, action) {
   }
 
   handler(state, ...action.args);
+  window.state = state;
   // TODO this doesn't work because redux will use this as the next state
   //      redux is kinda getting in the way with its opinions
   //return readonly(state);

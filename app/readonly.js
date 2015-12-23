@@ -23,7 +23,7 @@ function scalar_prop(val) {
 function object_prop(obj) {
   return {
     get() {
-      return wrap_object(obj);
+      return readonly_object(obj);
     },
     enumerable: true,
   };
@@ -32,7 +32,7 @@ function object_prop(obj) {
 function array_prop(arr) {
   return {
     get() {
-      return wrap_array(arr);
+      return readonly_array(arr);
     },
     enumerable: true,
   };
@@ -40,7 +40,7 @@ function array_prop(arr) {
 
 
 
-function wrap_object(d) {
+function readonly_object(d) {
   let props = {
     __data: {value: d, enumerable: false, writeable: false},
     clone: {
@@ -67,32 +67,48 @@ function wrap_object(d) {
   return Object.create({}, props);
 }
 
-function wrap_array(arr) {
-  let wrapper = {
+function readonly_array(arr) {
+  let readonlyper = {
     __data: arr,
     get(i) {
-      return this.__data[i];
+      return readonly(this.__data[i]);
     },
     get length() {
       return this.__data.length;
     },
     [Symbol.iterator]() {
-      return this.__data[Symbol.iterator]();
+      let it = this.__data[Symbol.iterator]();
+      return {
+        next: () => {
+          let v = it.next();
+          if (!v.done) {
+            v.value = readonly(v.value);
+          }
+          return v;
+        }
+      };
     },
+
+    map(callback, thisArg) {
+      return this.__data.map((value, index) => {
+        return callback.call(thisArg, readonly(value), index);
+      });
+    },
+
     clone() {
       return extend(true, [], this.__data);
     }
   };
-  Object.freeze(wrapper);
-  return wrapper;
+  Object.freeze(readonlyper);
+  return readonlyper;
 }
 
 
 export function readonly(d) {
   if (is_base_object(d)) {
-    return wrap_object(d);
+    return readonly_object(d);
   } else if (is_array(d)) {
-    return wrap_array(d);
+    return readonly_array(d);
   } else if (is_scalar(d)) {
     return d;
   } else {
