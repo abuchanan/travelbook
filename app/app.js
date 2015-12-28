@@ -5,6 +5,7 @@ import { render } from 'react-dom';
 import { createStore, applyMiddleware } from 'redux';
 import { Provider, connect } from 'react-redux';
 import { readonly } from './readonly';
+import { entries } from './utils';
 
 import {
   create_flight,
@@ -38,13 +39,11 @@ function on_tick_playback(state) {
 
   console.log("playback tick", current_time);
 
-  for (let flight_id in flights) {
-    let flight = flights[flight_id];
+  for (let [id, flight] of entries(flights)) {
     playback_flight(state, flight, current_time);
   }
 
-  for (let drive_id in drives) {
-    let drive = drives[drive_id];
+  for (let [id, drive] of entries(drives)) {
     playback_drive(state, drive, current_time);
   }
 
@@ -240,6 +239,11 @@ let simple_handlers = {
     extend(true, state, data);
   },
 
+  update_keyframe_time(state, track_id, keyframe_id, time) {
+    console.log("update keyframe time", track_id, keyframe_id, time);
+    Keyframes.move_keyframe(state.tracks[track_id].keyframes, keyframe_id, time);
+  }
+
 };
 
 let async_handlers = {
@@ -304,12 +308,12 @@ function make_dispatchers(dispatch) {
     return (...args) => func(dispatchers, store.getState, ...args);
   }
 
-  for (let key in simple_handlers) {
+  for (let key of Object.keys(simple_handlers)) {
     dispatchers[key] = make_simple_dispatcher(key);
   }
 
-  for (let key in async_handlers) {
-    dispatchers[key] = make_async_dispatcher(async_handlers[key]);
+  for (let [key, handler] of entries(async_handlers)) {
+    dispatchers[key] = make_async_dispatcher(handler);
   }
   return {dispatchers};
 }

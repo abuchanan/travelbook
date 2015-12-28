@@ -6,15 +6,31 @@ export function set_keyframe(keyframes, time, value, transition) {
     var keyframe = keyframes[i];
 
     if (keyframe.time == time) {
+      toSet.id = i;
       keyframes[i] = toSet;
       return;
     } else if (time < keyframe.time) {
-      keyframes.splice(i, toSet);
+      toSet.id = i;
+      keyframes.splice(i, 0, toSet);
       return;
     }
   }
 
+
   keyframes.push(toSet);
+  toSet.id = keyframes.length - 1;
+}
+
+export function move_keyframe(keyframes, keyframe_id, time) {
+  // TODO this is a major downside of the data storage wrappers
+  //      can't do equality testing
+  //let i = keyframes.indexOf(keyframe);
+
+  // TODO also dangerous because originally I passed in "keyframe"
+  //      which had a read-only wrapper around the value.
+
+  let keyframe = keyframes.splice(keyframe_id, 1);
+  set_keyframe(keyframes, time, keyframe.value, keyframe.transition);
 }
 
 export function get_keyframes(keyframes, time) {

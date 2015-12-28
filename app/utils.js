@@ -7,3 +7,9 @@ export function generate_id() {
 export function seconds(n) {
   return n * 1000;
 }
+
+export function* entries(obj) {
+   for (let key of Object.keys(obj)) {
+     yield [key, obj[key]];
+   }
+}

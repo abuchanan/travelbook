@@ -2,6 +2,8 @@ import React from 'react';
 import MapboxGL from 'mapbox-gl';
 import buildClassNames from 'classnames';
 
+import { entries } from '../utils';
+
 
 MapboxGL.accessToken = 'pk.eyJ1IjoiYnVjaGFuYWUiLCJhIjoiY2loNzR0Y3U5MGd2OXZka3QyMHJ5bXo0ZCJ9.HdT8S-gTjPRkTb4v8Z23KQ';
 
@@ -167,10 +169,10 @@ const MapComponent = React.createClass({
       }
     }
 
-    for (let source_id in sources) {
-      this.get_or_create_source(source_id).setData({
+    for (let [id, source] of entries(sources)) {
+      this.get_or_create_source(id).setData({
          "type": "FeatureCollection",
-         "features": sources[source_id].clone(),
+         "features": source.clone(),
       });
     }
   },

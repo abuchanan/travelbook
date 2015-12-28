@@ -39,15 +39,16 @@ function array_prop(arr) {
 }
 
 
-
 function readonly_object(d) {
+  let proto = {
+    clone() {
+      return extend(true, {}, this.__data);
+    },
+  };
+
   let props = {
     __data: {value: d, enumerable: false, writeable: false},
-    clone: {
-      value() { return extend(true, {}, this.__data); },
-      enumerable: false,
-      writeable: false,
-    }
+    __is_ro: {value: true, enumerable: false}
   };
 
   for (let key in d) {
@@ -64,12 +65,11 @@ function readonly_object(d) {
     }
   }
 
-  return Object.create({}, props);
+  return Object.create(proto, props);
 }
 
 function readonly_array(arr) {
-  let readonlyper = {
-    __data: arr,
+  let proto = {
     get(i) {
       return readonly(this.__data[i]);
     },
@@ -99,12 +99,22 @@ function readonly_array(arr) {
       return extend(true, [], this.__data);
     }
   };
-  Object.freeze(readonlyper);
-  return readonlyper;
+  let props = {
+    __data: {value: arr, enumerable: false},
+    __is_ro: {value: true, enumerable: false}
+  }
+
+  let ro = Object.create(proto, props);
+  Object.freeze(ro);
+  return ro;
 }
 
 
 export function readonly(d) {
+  if (d.__is_ro) {
+    return d;
+  }
+
   if (is_base_object(d)) {
     return readonly_object(d);
   } else if (is_array(d)) {
