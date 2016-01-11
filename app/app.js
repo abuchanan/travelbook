@@ -4,7 +4,6 @@ import React from 'react';
 import { render } from 'react-dom';
 import { createStore, applyMiddleware } from 'redux';
 import { Provider, connect } from 'react-redux';
-import { readonly } from './readonly';
 import { entries } from './utils';
 
 import {
@@ -36,7 +35,6 @@ JSON.pretty = function(data) {
 
 function on_tick_playback(state) {
   let {playback: {current_time}, flights, drives} = state;
-
   console.log("playback tick", current_time);
 
   for (let [id, flight] of entries(flights)) {
@@ -84,7 +82,7 @@ function playback_map_follow(state, current_time) {
 
 
 const initial_state = {
-  playback: initial_playback_state.clone(),
+  playback: initial_playback_state(),
 
   flights: {},
   drives: {},
@@ -275,7 +273,7 @@ let handlers = {...simple_handlers, ...async_handlers};
 function app(state = initial_state, action) {
   let handler = handlers[action.type];
   if (handler === undefined) {
-    return state;
+    return extend({}, state);
   }
 
   handler(state, ...action.args);
@@ -283,10 +281,13 @@ function app(state = initial_state, action) {
   // TODO this doesn't work because redux will use this as the next state
   //      redux is kinda getting in the way with its opinions
   //return readonly(state);
+  //return {state};
 
   // TODO again, redux is getting in the way because it's doing an equality
   //      check here. If you don't return a new object, nothing will be
   //      updated.
+  // TODO and yet again, redux is doing some sort of check on the first level
+  //      of properties. super annoying.
   return extend({}, state);
 }
 
@@ -294,7 +295,7 @@ const store = createStore(app);
 
 
 function select(state) {
-  return readonly(state);
+  return {state};
 }
 
 function make_dispatchers(dispatch) {

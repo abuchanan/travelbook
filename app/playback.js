@@ -1,21 +1,22 @@
 import extend from 'extend';
-import { readonly } from './readonly';
 
 
-export const initial_playback_state = readonly({
-  playing: false,
-  stop_on_next: false,
-  global_start_time: -1,
-  end_time: Number.POSITIVE_INFINITY,
-  previous_time: -1,
-  current_time: 0,
-});
+export function initial_playback_state() {
+  return {
+    playing: false,
+    stop_on_next: false,
+    global_start_time: -1,
+    end_time: Number.POSITIVE_INFINITY,
+    previous_time: -1,
+    current_time: 0,
+  };
+};
 
 
 export function on_receive_frame(playback_state, global_time) {
 
   if (playback_state.stop_on_next) {
-    extend(playback_state, initial_playback_state);
+    extend(playback_state, initial_playback_state());
     return;
   }
 
@@ -40,7 +41,7 @@ export function on_receive_frame(playback_state, global_time) {
 
   // Stop if playback has reached the end time.
   if (current_time >= playback_state.end_time) {
-    extend(playback_state, initial_playback_state);
+    extend(playback_state, initial_playback_state());
     return;
   }
 

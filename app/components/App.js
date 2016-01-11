@@ -15,15 +15,16 @@ export const App = React.createClass({
     console.log("render app");
 
     let {
-      dispatch,
-      flights,
-      drives,
-      tracks,
-      map,
-      playback: {
-        playing
+      state: {
+        flights,
+        drives,
+        tracks,
+        map,
+        playback: {
+          playing
+        },
+        inspector,
       },
-      inspector,
       dispatchers: {
         toggle_playback,
         set_inspector,

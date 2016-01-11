@@ -1,6 +1,5 @@
 import extend from 'extend';
 
-
 function is_scalar(val) {
   let type = typeof val;
   return type == "string" || type == "number" || type == "boolean" || val === null || val === undefined;
@@ -13,8 +12,6 @@ function is_base_object(val) {
 function is_array(val) {
   return val instanceof Array;
 }
-
-
 
 function scalar_prop(val) {
   return {value: val, writeable: false, enumerable: true};
@@ -52,16 +49,17 @@ function readonly_object(d) {
   };
 
   for (let key in d) {
-    let val = d[key];
-
-    if (is_scalar(val)) {
-      props[key] = scalar_prop(val);
-    } else if (is_base_object(val)) {
-      props[key] = object_prop(val);
-    } else if (is_array(val)) {
-      props[key] = array_prop(val);
-    } else {
-      throw new Error("Unhandled type: " + (typeof val));
+    if (d.hasOwnProperty(key)) {
+      let val = d[key];
+      if (is_scalar(val)) {
+        props[key] = scalar_prop(val);
+      } else if (is_base_object(val)) {
+        props[key] = object_prop(val);
+      } else if (is_array(val)) {
+        props[key] = array_prop(val);
+      } else {
+        throw new Error("Unhandled type: " + (typeof val));
+      }
     }
   }
 

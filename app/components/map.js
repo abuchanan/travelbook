@@ -126,8 +126,8 @@ const MapComponent = React.createClass({
   },
 
   updateMap(props) {
-    console.log("update mapbox");
     let mapbox = this.mapbox;
+    console.log("update map");
 
     let {
       map: {
@@ -172,7 +172,7 @@ const MapComponent = React.createClass({
     for (let [id, source] of entries(sources)) {
       this.get_or_create_source(id).setData({
          "type": "FeatureCollection",
-         "features": source.clone(),
+         "features": source,
       });
     }
   },
