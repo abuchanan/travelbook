@@ -33,10 +33,16 @@ var toCopy = [
 
 gulp.task('copy', function() {
   return gulp
-    .src('app/**/*', {base: './app'})
-    .pipe(gulp.dest(BUILD_DIR));
+    .src('app/**/*')
+    .pipe(gulp.dest(BUILD_DIR + '/app/'));
 });
 
+
+gulp.task('copy-tests', function() {
+  return gulp
+    .src('tests/**/*')
+    .pipe(gulp.dest(BUILD_DIR + '/tests/'));
+});
 
 gulp.task('yaml2json', function() {
   var data = yaml2json(fs.readFileSync(__dirname + '/sorted.yml'))
@@ -48,7 +54,7 @@ var buildNotification;
 
 gulp.task('browserify', function() {
   var browserifyConfig = {
-    entries: ['./build/app.js'],
+    entries: ['./build/app/app.js'],
     cacheFile: './browserify-incremental-cache.json',
     debug: true,
     transform: ["babelify"],
@@ -66,9 +72,31 @@ gulp.task('browserify', function() {
       this.end();
     })
     .pipe(source('bundle.js'))
-    .pipe(gulp.dest(BUILD_DIR))
+    .pipe(gulp.dest(BUILD_DIR));
 });
 
+gulp.task('browserify-tests', function() {
+  var browserifyConfig = {
+    entries: ['./build/tests/entry.js'],
+    cacheFile: './browserify-tests-incremental-cache.json',
+    debug: true,
+    transform: ["babelify"],
+    baseDir: __dirname,
+  };
+
+  return browserify(browserifyConfig)
+    .bundle()
+    .on('error', function(err) {
+      // Remove __dirname from the error message to make it more easily readable.
+      err.message = err.message.split(__dirname).join('');
+      gutil.log(err.message);
+      console.log(err.codeFrame);
+      BuildResult.errors.push(err);
+      this.end();
+    })
+    .pipe(source('tests-bundle.js'))
+    .pipe(gulp.dest(BUILD_DIR));
+});
 
 gulp.task('generate-thumbnails', function() {
   return gulp.src('image-collection/**/*.{jpg,JPG,jpeg,JPEG,gif,png,PNG}')
@@ -146,6 +174,7 @@ gulp.task('watch', function() {
     TaskSet('build', 'serve')();
   }
   gulp.watch('app/**/*.js', TaskSet('copy', 'browserify'));
+  gulp.watch('tests/**/*.js', TaskSet('copy-tests', 'browserify-tests'));
   gulp.watch(toCopy, TaskSet('copy'));
 });
 
@@ -168,8 +197,10 @@ function TaskSet() {
 gulp.task('build', TaskSet(
   'clean:dev',
   'copy',
-  'symlink-image-collection',
-  'symlink-thumbnails',
-  'list-image-collection',
-  'browserify'
+  'copy-tests',
+  // 'symlink-image-collection',
+//  'symlink-thumbnails',
+  // 'list-image-collection',
+  'browserify',
+  'browserify-tests'
 ));

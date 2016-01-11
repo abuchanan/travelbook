@@ -36,6 +36,7 @@ const FlightControl = props => {
       <LocationControl
         onResultSelected={ r => set_flight_destination(flight.id, get_location(r)) }
       />
+      <div><textarea value={ JSON.pretty(flight.arc) } readOnly></textarea></div>
     </div>
   );
 };

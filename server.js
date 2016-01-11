@@ -6,11 +6,13 @@ var path = require('path');
 var app = express();
 
 app.use(express.static('build'));
+
 app.use(bodyParser.json({
   extended: true,
   parameterLimit: 10000,
   limit: 1024 * 1024 * 10
 }));
+
 app.use(bodyParser.urlencoded({
   extended: true,
   parameterLimit: 10000,
@@ -24,11 +26,15 @@ app.post('/save', function (req, res) {
   fs.writeFileSync(path, JSON.stringify(req.body));
 });
 
+app.get('/test', function(request, response) {
+  response.sendFile(path.resolve(__dirname, 'build', 'tests', 'index.html'));
+});
+
 // handle every other route with index.html, which will contain
 // a script tag to your application's JavaScript file(s).
 app.get('*', function (request, response){
   response.sendFile(path.resolve(__dirname, 'build', 'index.html'))
-})
+});
 
 
 module.exports = function() {

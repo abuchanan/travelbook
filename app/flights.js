@@ -71,7 +71,7 @@ function get_progress(progress_track, current_time) {
   return progress;
 }
 
-function slice_line(source, percent) {
+export function slice_line(source, percent) {
   let source_length = source.geometry.coordinates.length;
   let slice_length = Math.floor(source_length * percent);
   let clone = extend(true, {}, source);
